@@ -21,6 +21,3 @@ If you get any error, please check your OMS API installation.
 
 - Check the nutuples produced in your outputFolder :-)
 
-### Plots
-
-- The plots obtained centrally are available at https://sdonato.web.cern.ch/sdonato/OMSRatesNtuple
