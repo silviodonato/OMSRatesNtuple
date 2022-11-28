@@ -1,34 +1,36 @@
 #!/usr/bin/env python
+from __future__ import print_function
+""" This code download the trigger rates using OMS API (https://gitlab.cern.ch/cmsoms/oms-api-client).
+Parts of the code have been taken from https://gitlab.cern.ch/cmsoms/oms-api-client/-/blob/master/examples/06-get-max-rate-l1trigger-bit.py
+and from https://gitlab.cern.ch/cms-tsg-fog/ratemon/-/tree/master/ .
 
-""" Get maximum rate of L1 trigger algo bits
-Taken from https://gitlab.cern.ch/cmsoms/oms-api-client/-/blob/master/examples/06-get-max-rate-l1trigger-bit.py
-
-/eos/user/s/sdonato/public/OMS_rates
-/afs/cern.ch/work/s/sdonato/ratemon/ratemon
+The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 """
 
-from __future__ import print_function
+run_min = 355678 ## July 17, before this run the lumi is stored using a different unit
+run_max = 999000
+#run_min = 362079 # RunG
+#run_max = 362782 # RunG
+minimum_integratedLumi = 1. # require at least some pb-1 (?) per run 
+outputFolder = "."
+
+overwrite = False #overwrite output files
+requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
+badRuns = [360088, 357112,357104, 355872] #the code crashes on these runs
+
+## Max limits in queries, used for testing
+minLS = 0
+maxLS = 50000
+maxHLTPaths = 5000
+maxL1Bits = 5000
+max_pages = 10000
+
 import sys
 import os
 import argparse
 import re
 import ROOT
 from array import array
-
-#trigger = "L1_Mu18er2p1_Tau24er2p1"
-#doL1 = False
-minLS = 0
-maxLS = 50000
-maxHLTPaths = 5000
-maxL1Bits = 5000
-minimum_integratedLumi = 1.
-requiredHLTpath = "AlCa_EcalEtaEBonly_v"
-max_pages = 10000
-run_min = 355000
-run_max = 999000
-run_max = 355872
-overwrite = False
-badRuns = [360088, 357112,357104, 355872]
 
 if not os.path.exists( os.getcwd() + 'omsapi.py' ):
     sys.path.append('..')  # if you run the script in the more-examples sub-folder 
@@ -57,16 +59,17 @@ l1BitMap = {}
 l1Bits = []
 
 L1Counts_var = {}
+
 ### Define tree variables, option https://root.cern.ch/doc/master/classTTree.html 
 def SetVariable(tree,name,option='F',lenght=1,maxLenght=100):
-    if option is 'F': arraytype='f'
-    elif option is 'O': arraytype='i'
-    elif option is 'I': arraytype='l'
+    if option == 'F': arraytype='f'
+    elif option == 'O': arraytype='i'
+    elif option == 'I': arraytype='l'
     else:
         print('option ',option,' not recognized.')
         return
 
-    if not type(lenght) is str:
+    if not type(lenght) == str:
         maxLenght = lenght
         lenght = str(lenght)
     variable = array(arraytype,[0]*maxLenght)
@@ -87,7 +90,7 @@ query.attrs(["run_number","recorded_lumi","components"]) #
 #query.filter("components", "TRACKER")
 query.filter("run_number", run_min, "GE")
 query.filter("run_number", run_max, "LE")
-query.filter("recorded_lumi", 1., "GE")
+query.filter("recorded_lumi", minimum_integratedLumi, "GE") ## require at least minimum_integratedLumi [pb-1] of lumi per run
 
 resp = query.data()
 oms = resp.json()   # all the data returned by OMS
@@ -100,7 +103,7 @@ for d in reversed(data):
         print(d['attributes']['run_number'], d['attributes']['recorded_lumi'], len(d['attributes']['components']))
 
 for run in runs:
-    fName = str(run)+".root"
+    fName = outputFolder+"/"+str(run)+".root"
     if os.path.isfile(fName):
         print(fName+" already existing, skipping.")
         continue
