@@ -1,5 +1,5 @@
 ## OMSRatesNtuple
-These repository contains two tools:
+Thise repository contains two tools:
 
 - [OMS_ntuplizer](https://github.com/silviodonato/OMSRatesNtuple/tree/main/OMS_ntuplizer) allows you to download the trigger rates from OMS and save them in ROOT files. The ntuples are already available in `/eos/user/s/sdonato/public/OMS_rates/v1.0`
 
