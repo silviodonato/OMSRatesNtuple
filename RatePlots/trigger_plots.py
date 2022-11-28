@@ -3,10 +3,10 @@ import CMS_lumi, tdrstyle #https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal
 tdrstyle.setTDRStyle()
 import os
 
-lumisPerBin=20
+lumisPerBin=50
 batch = True
 #batch = False
-testing = True
+testing = False
 #testing = True
 runMin = 355678 # July 17. Different unit for rec lumi before this run.
 runMax = -1
@@ -28,7 +28,7 @@ plotsFolder = "plots/"
 #useRate = False
 
 folderSelection = {
-    "PU53_47": "cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60",
+    "PU50_60": "cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60",
     "inclusive": "cms_ready && beams_stable && beam2_stable",
 #    "RunE": "cms_ready && beams_stable && beam2_stable",
 }
