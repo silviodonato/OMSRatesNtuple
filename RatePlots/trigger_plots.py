@@ -22,8 +22,8 @@ ROOT.gROOT.SetBatch(batch)
 chain = ROOT.TChain("tree")
 
 folder = "/eos/user/s/sdonato/public/OMS_rates/"
-folder = "/run/user/1000/gvfs/sftp:host=lxplus.cern.ch,user=sdonato/afs/cern.ch/user/s/sdonato/AFSwork/ratemon/ratemon/"
-folder = "OMS_ntuples/"
+#folder = "/run/user/1000/gvfs/sftp:host=lxplus.cern.ch,user=sdonato/afs/cern.ch/user/s/sdonato/AFSwork/ratemon/ratemon/"
+#folder = "OMS_ntuples/"
 plotsFolder = "plots/"
 #useRates = False
 
