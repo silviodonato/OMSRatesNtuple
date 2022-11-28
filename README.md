@@ -10,6 +10,6 @@ Thise repository contains two tools:
 ```
 git clone git@github.com:silviodonato/OMSRatesNtuple.git
 ```
-then follow the [OMS_ntuplizer](https://github.com/silviodonato/OMSRatesNtuple/blob/main/OMS_ntuplizer/README.md) or [RatePlots](https://github.com/silviodonato/OMSRatesNtuple/blob/main/RatePlots/README.md) README.
+then follow the corresponding [OMS_ntuplizer](https://github.com/silviodonato/OMSRatesNtuple/blob/main/OMS_ntuplizer/README.md) or [RatePlots](https://github.com/silviodonato/OMSRatesNtuple/blob/main/RatePlots/README.md) README.
 
 
