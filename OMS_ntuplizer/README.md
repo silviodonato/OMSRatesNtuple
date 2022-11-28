@@ -14,6 +14,8 @@ If you get any error, please check your OMS API installation.
 
 ### Run OMS ntuplizer
 
-- Edit the parameters in `OMS_ntuplizer.py` (eg. `outputFolder`).
+- Edit the parameters in `OMS_ntuplizer.py` (eg. select a different `outputFolder`, default is `.`).
 
 - Run `python3 OMS_ntuplizer.py`.
+
+- Check the nutuples produced in your outputFolder :-)
