@@ -23,3 +23,7 @@ As the size of the OMS nuples in `/eos/user/s/sdonato/public/OMS_rates/v1.0/` is
 - `removeOutliers`: set the maximum rate/cross-section in the plot with respect to the average. Default: `1.5` means the maximum rate showed is 50% larger than the average rate 
 - `folderSelection`: list of output subfolders with the definintion of the selection criteria (eg. PU range)
 - `triggers`: list of monitored triggers.
+
+### Plots
+
+- The plots obtained centrally are available at https://sdonato.web.cern.ch/sdonato/OMSRatesNtuple
