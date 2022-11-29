@@ -1,71 +1,110 @@
+#!/usr/bin/python3
+
 import ROOT
 import CMS_lumi, tdrstyle #https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines
 tdrstyle.setTDRStyle()
 import os
 
-lumisPerBin=50
-batch = True
-#batch = False
-testing = False
-#testing = True
-runMin = 355678 # July 17. Different unit for rec lumi before this run.
-runMax = -1
-##runMax = 361447
-#runMax = 361447
-#runMax = 359000
-#runMax = 361000
-removeOutliers = 0.01 ## 0.01 = remove %1 of outliers 
-useRates=[False, True] ## useRates = False -> plot cross section , True -> plot rates.
-refLumi = 2E34
-
 chain = ROOT.TChain("tree")
 
-folder = "/eos/user/s/sdonato/public/OMS_rates/"
-#folder = "/run/user/1000/gvfs/sftp:host=lxplus.cern.ch,user=sdonato/afs/cern.ch/user/s/sdonato/AFSwork/ratemon/ratemon/"
-#folder = "/home/sdonato/CMS/OMS_plots/OMS_ntuples/"
-plotsFolder = "plots/"
-#useRate = False
-
-vses = ["vsTime","vsIntLumi","vsPU","vsFill"]
-
-folderSelection = {
+selectionDefault = {
     "PU50_60": "cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60",
     "inclusive": "cms_ready && beams_stable && beam2_stable",
 #    "RunE": "cms_ready && beams_stable && beam2_stable",
 }
 
-triggers = [
-#    "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v",
-#    "HLT_IsoMu24_v",
-#    "HLT_Ele30_WPTight_Gsf_v",
-#    "HLT_QuadPFJet70_50_40_35_PFBTagParticleNet_2BTagSum0p65_v" ,
-#    "HLT_DoubleEle7p5_eta1p22_mMax6_v",
-#    "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF_v",
-#    "AlCa_PFJet40_v",
-#    "HLT_AK8PFJet250_SoftDropMass40_PFAK8ParticleNetBB0p35_v",
-#    "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v",
-#    "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_Mass55_v",
-#    "HLT_AK8PFJet420_TrimMass30_v",
-#    "HLT_PFHT330PT30_QuadPFJet_75_60_45_40_TriplePFBTagDeepJet_4p5_v",
-#    "L1_SingleIsoEG30er2p5",
-#    "L1_SingleEG36er2p5",
-#    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
-#    "L1_DoubleIsoTau34er2p1",
-#    "L1_LooseIsoEG30er2p1_HTT100er",
-#    "L1_SingleMu22",
-#    "L1_HTT360er",
-#    "L1_ETMHF90",
+triggerDefault = [
+    "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v",
+    "HLT_IsoMu24_v",
+    "HLT_Ele30_WPTight_Gsf_v",
+    "HLT_QuadPFJet70_50_40_35_PFBTagParticleNet_2BTagSum0p65_v" ,
+    "HLT_DoubleEle7p5_eta1p22_mMax6_v",
+    "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF_v",
+    "AlCa_PFJet40_v",
+    "HLT_AK8PFJet250_SoftDropMass40_PFAK8ParticleNetBB0p35_v",
+    "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v",
+    "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_Mass55_v",
+    "HLT_AK8PFJet420_TrimMass30_v",
+    "HLT_PFHT330PT30_QuadPFJet_75_60_45_40_TriplePFBTagDeepJet_4p5_v",
+    "L1_SingleIsoEG30er2p5",
+    "L1_SingleEG36er2p5",
+    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
+    "L1_DoubleIsoTau34er2p1",
+    "L1_LooseIsoEG30er2p1_HTT100er",
+    "L1_SingleMu22",
+    "L1_HTT360er",
+    "L1_ETMHF90",
     "L1_DoubleEG_LooseIso25_LooseIso12_er1p5",
 ]
 
 #for tr in triggerColors: triggerColors[tr]= ROOT.kBlue
 
-files = os.listdir(folder)
+
+###################################################
+import argparse
+
+parser = argparse.ArgumentParser( 
+    description='https://github.com/silviodonato/OMSRatesNtuple', 
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+parser.add_argument('--rates', action='store_const', const=True, default=False, help='Make rates plots')
+parser.add_argument('--xsect', action='store_const', const=True, default=True, help='Make cross sections plots')
+parser.add_argument('--vsFill', action='store_const', const=True, default=False, help='Make plots vs fill number')
+parser.add_argument('--vsPU', action='store_const', const=True, default=False, help='Make plots vs fill number')
+parser.add_argument('--vsIntLumi', action='store_const', const=True, default=True, help='Make plots vs integrated luminosity')
+parser.add_argument('--vsTime', action='store_const', const=True, default=False, help='Make plots vs days')
+parser.add_argument('--runMin', default=362719 , help='Run min. The minimum run possible run is 355678 (July 17, 2022)')
+parser.add_argument('--runMax', default=1000000 , help='Run max')
+parser.add_argument('--triggers', default="" , help='List of trigger used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used. Example: --triggers HLT_IsoMu24_v,AlCa_PFJet40_v')
+parser.add_argument('--selections', default="" , help='List of selections used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used.')
+parser.add_argument('--input', default="/eos/user/s/sdonato/public/OMS_rates/" , help='Input folder containing the OMS ntuples')
+parser.add_argument('--output', default="plots/" , help='Folder of the output plots')
+parser.add_argument('--refLumi', default=2E34 , help='Reference rate used in the cross-section plots.')
+parser.add_argument('--lumisPerBin', default=-1 , help='Number of lumisections that will be merged in the plots. Cannot work with --nbins')
+parser.add_argument('--nbins', default=1000 , help='Number of max bins. Cannot work with --lumisPerBin')
+parser.add_argument('--removeOutliers', default="0.01" , help='Percentile of data points that will excluded from the plots. This is necessary to remove the rates spikes from the plots.')
+parser.add_argument('--nobatch', action='store_const', const=True, default=False, help='Disable ROOT batch mode')
+parser.add_argument('--testing', action='store_const', const=True, default=False, help='Used for debugging/development')
+
+args = parser.parse_args()
+
+from tools import readOptions
+useRates, vses, triggers, folder, plotsFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins = readOptions(parser.parse_args(), triggerDefault, selectionDefault)
+
+print("##### Options #####")
+print ("trigger_plots.py will produce %d x %d x %d x %d = %d plots in %s using OMS ntuples from %s, using %d lumisections per bin"%(len(useRates),len(vses),len(triggers),len(selections),len(useRates)*len(vses)*len(triggers)*len(selections), plotsFolder, folder, lumisPerBin))
+print(vses)
+print("useRates=",useRates)
+print("triggers=",triggers)
+print("selections=",selections)
+print()
+print("Runs %d - %d"%(runMin,runMax))
+print("removeOutliers = %f (percentile)"%removeOutliers)
+print("refLumi = %f"%refLumi)
+print("batch = %s"%str(batch))
+print("testing = %s"%str(testing))
+print("###################")
+
+
+
+###################################################
+
+try:
+    files = os.listdir(folder)
+except:
+    print("#"*100)
+    print("Input folder %s not found. Please check your --input option."%folder)
+    print("You can download the OMS ntuple from OMS using:")
+    print("xrdcp --recursive root://eosuser.cern.ch//eos/user/s/sdonato/public/OMS_rates/v1.0/  .")
+    print("#"*100)
+
+
 ## Use only few files and few triggers for testing:
 if testing:
     import shutil
-    folderSelection = {"testing":folderSelection["inclusive"]}
-    for f in folderSelection:
+    selections = {"testing":selections["inclusive"]}
+    for f in selections:
         shutil.rmtree(plotsFolder+"/"+f)
     lumisPerBin = 1
 #    files = ["362655.root","357900.root"]
@@ -74,6 +113,7 @@ if testing:
     runMax = 361500
     vses = ["vsFill"]
     useRates = [False]
+    folder = "/home/sdonato/CMS/OMS_plots/OMS_ntuples/"
 #    batch=False
 
 runs = [int(f.split(".root")[0]) for f in files  if (f[0]=="3" and f[-5:]==".root")]
@@ -120,18 +160,23 @@ timeVar = "(time + %f)/%f "%(offset, secInDay)
 # Loop over selections
 if not os.path.exists(plotsFolder):
     os.mkdir(plotsFolder)
-for selFolder in folderSelection:
+for selFolder in selections:
     print("Doing %s"%selFolder)
     outFolder = plotsFolder+"/"+selFolder
     if not os.path.exists(outFolder):
         os.mkdir(outFolder)
-    selection = folderSelection[selFolder]
+    selection = selections[selFolder]
 
     # get binning
-    from tools import getBinning
-    bin_size = LS_duration * lumisPerBin
-    ntimebins, timemin, timemax = getBinning(chain, timeVar, selection, bin_size)
-    binning = "(%s,%s,%s)"%(ntimebins,timemin,timemax)
+    from tools import getBinning, getBinningFromMax
+    if lumisPerBin>0:
+        bin_size = LS_duration * lumisPerBin
+        ntimebins, timemin, timemax = getBinning(chain, timeVar, selection, bin_size)
+        binning = "(%s,%s,%s)"%(ntimebins,timemin,timemax)
+    elif nbins>0:
+        ntimebins, timemin, timemax = getBinningFromMax(chain, timeVar, selection, LS_duration, nbins)
+        binning = "(%s,%s,%s)"%(ntimebins,timemin,timemax)
+    
 
     # get common histograms
     from tools import getHisto
@@ -265,14 +310,14 @@ for selFolder in folderSelection:
                 if not useRate:
                     fits[trigger] = createFit(xsec_vs[trigger], xsec_vs[trigger].Integral()/count_vs.Integral())
             
+            from tools import addPileUp
+            from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel
+            puScaleMax = 1.1*pileup_vs.GetMaximum()
+            setStyle(pileup_vs, puColor)
+            xsecLabel = xsecLabel%(refLumi/1E34)
             if vs in ["vsTime","vsFill"]: 
                 # make trigger cross sections plots vs time, showing the pileup_vs on the right axis
-                from tools import addPileUp
-                from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel
-                xsecLabel = xsecLabel%(refLumi/1E34)
                 print("xsecLabel %s"%xsecLabel)
-                setStyle(pileup_vs, puColor)
-                puScaleMax = 1.1*pileup_vs.GetMaximum()
                 for trigger in xsec_vs:
                     xsec_vs[trigger].SetTitle(title_vsTime)
                     if vs == "vsFill":

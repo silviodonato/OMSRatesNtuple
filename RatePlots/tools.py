@@ -17,8 +17,9 @@ def getCrossSection(histo, recLumi,removeOutliers=0.95):
             i = int(x*jump)
             if y1[i]>0 and y2[i]>0:
                 ys.append(y1[i]/y2[i])
-        maxAllowedIdx = int(len(ys) * (1.0-removeOutliers))-1
-        minAllowedIdx = int(len(ys) * (removeOutliers))+1
+        maxAllowedIdx = min(int(len(ys) * (1.0-removeOutliers))-1, len(ys)-2)
+        minAllowedIdx = max(int(len(ys) * (removeOutliers))+1, 0)
+        print(len(ys), minAllowedIdx, maxAllowedIdx)
         maxAllowedValue = sorted(ys)[maxAllowedIdx]
         minAllowedValue = sorted(ys)[minAllowedIdx]
 #        print ( [sorted(ys)[i] for i in range(len(ys))])
@@ -64,6 +65,17 @@ def getBinning(chain, var, selection,bin_size):
     ntimebins =  int((timemax-timemin)/bin_size)
     timemax = timemin + bin_size*(ntimebins-1)
     del tmp
+    return ntimebins, timemin, timemax
+
+def getBinningFromMax(chain, var, selection, LS_duration, nbins):
+    tmp =  getHisto("1", chain, var, "", selection)
+    timemax = tmp.GetXaxis().GetXmax()
+    timemin = tmp.GetXaxis().GetXmin()
+    bin_size =  int((timemax-timemin)/nbins/LS_duration)*LS_duration
+    ntimebins =  int((timemax-timemin)/bin_size)
+    timemax = timemin + bin_size*(ntimebins-1)
+    del tmp
+    print("HELLO ", ntimebins, timemin, timemax)
     return ntimebins, timemin, timemax
 
 def setColor(plot, color):
@@ -129,8 +141,8 @@ def getPlotVsNewVar(plot_vsOldVar, newVar_vsOldVar):
 
 
 def getHistoVsFillNumber(histo, fill):
-    min_ = int(fill.GetMinimum())
-    max_ = int(fill.GetMaximum())
+    min_ = int(fill.GetMinimum()-1)
+    max_ = int(fill.GetMaximum()+2)
     nHisto = ROOT.TH1F(histo.GetName() + fill.GetName(),"" , max_-min_, min_, max_)
     for i in range(len(histo)):
         if histo.GetBinContent(i)>0 and fill.GetBinContent(i):
@@ -138,3 +150,31 @@ def getHistoVsFillNumber(histo, fill):
 #            print(fill.GetBinContent(i), histo.GetBinContent(i))
     nHisto.Sumw2()
     return nHisto
+
+def readOptions(args, triggers, selections):
+    useRates = []
+    vses = []
+    if args.rates: useRates.append(True)
+    if args.xsect: useRates.append(False)
+    if args.vsFill: vses.append("vsFill")
+    if args.vsPU: vses.append("vsPU")
+    if args.vsIntLumi: vses.append("vsIntLumi")
+    if args.vsTime: vses.append("vsTime")
+    runMin = int(args.runMin)
+    runMax = int(args.runMax)
+    removeOutliers = float(args.removeOutliers)
+    folder = args.input
+    plotFolder = args.output
+    if args.triggers: triggers = args.triggers.split(",")
+    if args.selections: 
+        selections = {}
+    batch = not args.nobatch
+    testing = args.testing
+    refLumi = float(args.refLumi)
+    lumisPerBin = int(args.lumisPerBin)
+    nbins = int(args.nbins)
+    if nbins>0 and lumisPerBin>0: raise Exception("You have to use one and only one option between --lumisPerBin and --nbins.")
+    print(args)
+    print(useRates, vses, triggers, folder, plotFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins)
+    return useRates, vses, triggers, folder, plotFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins
+
