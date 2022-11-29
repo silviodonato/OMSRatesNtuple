@@ -7,14 +7,14 @@ lumisPerBin=20
 batch = True
 #batch = False
 testing = False
-testing = True
+#testing = True
 runMin = 355678 # July 17. Different unit for rec lumi before this run.
 runMax = -1
 ##runMax = 361447
 #runMax = 361447
 #runMax = 359000
 #runMax = 361000
-removeOutliers = 1.5
+removeOutliers = 0.01 ## 0.01 = remove %1 of outliers 
 useRates=[False, True] ## useRates = False -> plot cross section , True -> plot rates.
 refLumi = 2E34
 
@@ -26,8 +26,10 @@ folder = "/home/sdonato/CMS/OMS_plots/OMS_ntuples/"
 plotsFolder = "plots/"
 #useRate = False
 
+vses = ["vsTime","vsIntLumi","vsPU","vsFill"]
+
 folderSelection = {
-    "PU53_47": "cms_ready && beams_stable && beam2_stable && pileup_vsTime>50 && pileup_vsTime<60",
+    "PU50_60": "cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60",
     "inclusive": "cms_ready && beams_stable && beam2_stable",
 #    "RunE": "cms_ready && beams_stable && beam2_stable",
 }
@@ -61,17 +63,22 @@ triggers = [
 files = os.listdir(folder)
 ## Use only few files and few triggers for testing:
 if testing:
+    import shutil
     folderSelection = {"testing":folderSelection["inclusive"]}
+    for f in folderSelection:
+        shutil.rmtree(plotsFolder+"/"+f)
     lumisPerBin = 1
 #    files = ["362655.root","357900.root"]
 #    triggers = ["HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v", "HLT_IsoMu24_v","AlCa_PFJet40_CPUOnly_v"]
     runMin = 360449 # July 17. Different unit for rec lumi before this run.
     runMax = 361500
-    batch=False
+    vses = ["vsFill"]
+    useRates = [False]
+#    batch=False
 
 runs = [int(f.split(".root")[0]) for f in files  if (f[0]=="3" and f[-5:]==".root")]
-#selection = "pileup_vsTime>53 && pileup_vsTime<57 && cms_ready && beams_stable && beam2_stable"
-#selection = "pileup_vsTime>54 && pileup_vsTime<56 && cms_ready && beams_stable && beam2_stable"
+#selection = "pileup_vs>53 && pileup_vs<57 && cms_ready && beams_stable && beam2_stable"
+#selection = "pileup_vs>54 && pileup_vs<56 && cms_ready && beams_stable && beam2_stable"
 #selection = "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v>0"
 
 
@@ -133,7 +140,7 @@ for selFolder in folderSelection:
     delLumi_vsTime.Scale(1./1000)# pb-1 -> fb-1
     intLumi_vsTime = delLumi_vsTime.GetCumulative()
     intLumi_vsTime.SetName(intLumi_vsTime.GetName().replace("_",""))
-    count_vsTime = getHisto("1", chain, timeVar, binning, selection) ## count_vsTime number of entries per bin
+    count_vsTime = getHisto("1", chain, timeVar, binning, selection) ## count_vs number of entries per bin
     pileup_vsTime = getHisto("pileup", chain, timeVar, binning, selection)
     recLumi_vsTime = getHisto("recorded_lumi_per_lumisection", chain, timeVar, binning, selection) #pb-1 * 1E33 = 1 cm-2
     recLumi_vsTime.Scale(1E36/refLumi)# pb-1 -> cm-2 -> rates at 2E34 cm-2s-1
@@ -141,9 +148,7 @@ for selFolder in folderSelection:
 
     ## take the average value per bin, instead of the sum, for non-cumulative variables
     from tools import dropError
-    pileup_vsTime.Divide(count_vsTime) 
     fillNumber_vsTime.Divide(count_vsTime) 
-    dropError(pileup_vsTime)
     dropError(fillNumber_vsTime)
     fillNumber_vsTime.SetMinimum(firstFill)
 
@@ -152,18 +157,22 @@ for selFolder in folderSelection:
     count_vsFill = getHistoVsFillNumber(count_vsTime, fillNumber_vsTime)
     recLumi_vsFill = getHistoVsFillNumber(recLumi_vsTime, fillNumber_vsTime)
     intLumi_vsFill = getHistoVsFillNumber(intLumi_vsTime, fillNumber_vsTime)
-    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
+#    pileup_vsTime.Divide(count_vsTime) 
+#    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
     recLumi_vsFill.Draw()
-#    1/0
-    print("A")
-
+    
+    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
+    pileup_vsTime.Divide(count_vsTime) 
+    pileup_vsFill.Divide(count_vsFill) 
+    dropError(pileup_vsTime)
+    dropError(pileup_vsFill)
+    
     # init canvas
     from style import res_X,res_Y, gridX, gridY
     canv = ROOT.TCanvas("canv","",res_X,res_Y)
     canv.SetGridx(gridX)
     canv.SetGridy(gridY)
-    print("B")
-
+    
     from style import title_vsLumi,intLumiLabel,timeLabel
     intLumiLabel = intLumiLabel%firstFill ## replace %s with the actual first fill number 
     # plot integrated lumi vs time
@@ -173,35 +182,30 @@ for selFolder in folderSelection:
     intLumi_vsTime.Draw("HIST")
     canv.Update()
     canv.Modify()
-    print("C")
-    canv.SaveAs(outFolder+"/AintLumi_vsTime.root")
-    canv.SaveAs(outFolder+"/AintLumi_vsTime.png")
-    print("C")
-
+    
+    canv.SaveAs(outFolder+"/AintLumi_vs.root")
+    canv.SaveAs(outFolder+"/AintLumi_vs.png")
+    
     # plot the fill number vs integrated luminosity
     from style import fillLabel, fillNumberMargin
     lastFill = fillNumber_vsTime.GetMaximum()
     fillNumber_vsLumi = ROOT.TGraph(len(fillNumber_vsTime))
     npoints=0
-    print("D")
     for i in range(len(fillNumber_vsTime)):
         if fillNumber_vsTime[i]>0:
             fillNumber_vsLumi.SetPoint(npoints,intLumi_vsTime[i],fillNumber_vsTime[i])
             npoints+=1
-    print("D")
     fillNumber_vsLumi.SetMarkerSize(0.5)
     fillNumber_vsLumi.SetMarkerStyle(21)
     fillNumber_vsLumi.SetTitle("")
-    #fillNumber_vsLumi.GetXaxis().SetRangeUser(xsec_vsLum.keys()[0].GetXaxis().GetXmin(), pileup_vsTime.GetXaxis().GetXmax())
+    #fillNumber_vsLumi.GetXaxis().SetRangeUser(xsec_vsLum.keys()[0].GetXaxis().GetXmin(), pileup_vs.GetXaxis().GetXmax())
     fillNumber_vsLumi.GetXaxis().SetTitle(intLumiLabel)
     fillNumber_vsLumi.GetYaxis().SetTitle(fillLabel)
     fillNumber_vsLumi.SetMinimum(firstFill-fillNumberMargin)
     fillNumber_vsLumi.SetMaximum(fillNumber_vsTime.GetMaximum()+fillNumberMargin)
     fillNumber_vsLumi.Draw("AP")
-    print("E")
     canv.SaveAs(outFolder+"/AfillNumber_vsLumi.root")
     canv.SaveAs(outFolder+"/AfillNumber_vsLumi.png")
-    print("E")
     del canv 
     histos_vsTime = {}
     histos_vsFill = {}
@@ -212,18 +216,25 @@ for selFolder in folderSelection:
         histos_vsTime[trigger] = getHisto("%s"%trigger, chain, timeVar, binning, selection) #Alt$(%s,1) ?
         histos_vsFill[trigger] = getHistoVsFillNumber(histos_vsTime[trigger], fillNumber_vsTime)
         setStyle(histos_vsTime[trigger], getColor(i))
+        setStyle(histos_vsFill[trigger], getColor(i))
     for useRate in useRates:
-#        for vsTime in ["vsTime"]:
-        for vsTime in ["vsFill"]:
-#        for vsTime in ["vsTime","vsFill"]:
-            
+        for vs in vses:
+#        for vs in ["vsTime","vsFill","vsPU"]:
             ## Consider "vsTime" as default and the other option as an "hack"
-            if vsTime == "vsFill":
-                histos_vsTime[trigger] = histos_vsFill[trigger]
-                count_vsTime = count_vsFill
-                recLumi_vsTime = recLumi_vsFill
-                intLumi_vsTime = intLumi_vsFill
-                pileup_vsTime = pileup_vsFill
+            if vs in ["vsTime","vsPU","vsIntLumi"]:
+                histos_vs = histos_vsTime
+                count_vs = count_vsTime
+                recLumi_vs = recLumi_vsTime
+                intLumi_vs = intLumi_vsTime
+                pileup_vs = pileup_vsTime
+            elif vs == "vsFill":
+                histos_vs = histos_vsFill
+                count_vs = count_vsFill
+                recLumi_vs = recLumi_vsFill
+                intLumi_vs = intLumi_vsFill
+                pileup_vs = pileup_vsFill
+            else:
+                raise Exception("Problem with vs = %s"%vs)
             
             ## re-init canvas
             from style import res_X,res_Y, gridX, gridY
@@ -239,103 +250,108 @@ for selFolder in folderSelection:
             # get trigger cross sections histograms vs time and fit them with a constant
             from tools import getCrossSection, createFit
             from style import legStyle
-            xsec_vsTime = {}
+            xsec_vs = {}
             fits = {}
+            print("DOING ",vs,useRate,selFolder,triggers)
             for i, trigger in enumerate(triggers):
                 print("Getting histo for ", trigger)
-                if vsTime == "vsFill":
+                if vs == "vsFill":
                     histos_vs = histos_vsFill
                 if useRate:  ## get cross sections [events/recolumi]
-                    xsec_vsTime[trigger] = getCrossSection(histos_vsTime[trigger],count_vsTime,removeOutliers)
-                    xsec_vsTime[trigger].Scale(1./LS_seconds)
+                    xsec_vs[trigger] = getCrossSection(histos_vs[trigger],count_vs,removeOutliers)
+                    xsec_vs[trigger].Scale(1./LS_seconds)
                 else: ## computes rates [events/time]
-                    xsec_vsTime[trigger] = getCrossSection(histos_vsTime[trigger],recLumi_vsTime,removeOutliers)
+                    xsec_vs[trigger] = getCrossSection(histos_vs[trigger],recLumi_vs,removeOutliers)
                 if not useRate:
-                    fits[trigger] = createFit(xsec_vsTime[trigger], xsec_vsTime[trigger].Integral()/count_vsTime.Integral())
+                    fits[trigger] = createFit(xsec_vs[trigger], xsec_vs[trigger].Integral()/count_vs.Integral())
             
-            # make trigger cross sections plots vs time, showing the pileup_vsTime on the right axis
-            from tools import addPileUp
-            from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel
-            xsecLabel = xsecLabel%(refLumi/1E34)
-            print("xsecLabel %s"%xsecLabel)
-            setStyle(pileup_vsTime, puColor)
-            puScaleMax = 1.1*pileup_vsTime.GetMaximum()
-            for trigger in xsec_vsTime:
-                xsec_vsTime[trigger].SetTitle(title_vsTime)
-                if vsTime == "vsFill":
-                    xsec_vsTime[trigger].GetXaxis().SetTitle(fillLabel)
-                elif vsTime == "vsTime":
-                    xsec_vsTime[trigger].GetXaxis().SetTitle(timeLabel)
-                if useRate:
-                    xsec_vsTime[trigger].GetYaxis().SetTitle(ratesLabel)
-                else:
-                    xsec_vsTime[trigger].GetYaxis().SetTitle(xsecLabel)
-                xsec_vsTime[trigger].GetYaxis().SetRangeUser(xsec_vsTime[trigger].GetMinimum()*0.9,xsec_vsTime[trigger].GetMaximum()*1.1)
-                xsec_vsTime[trigger].Draw("e1")
-        #        puScaleMin = xsec_vsTime[trigger].GetMinimum()/xsec_vsTime[trigger].GetMaximum()*puScaleMax
-                pileup_vsTime_scaled, rightaxis = addPileUp(canv, pileup_vsTime, puScaleMax, pileupLabel)
-                pileup_vsTime_scaled.Draw("P, same")
-        #        xsec_vsTime[trigger].Draw("P") ##keep pileup_vsTime in backgroup
-                rightaxis.Draw("") 
-                if not useRate:
-                    fits[trigger].Draw("same")
-                leg = createLegend()
-                leg.AddEntry(pileup_vsTime_scaled,"pileup_vsTime","p")
-                leg.AddEntry(xsec_vsTime[trigger],trigger,legStyle)
-                leg.Draw()
-                canv.SaveAs(outFolder+"/"+prefix+trigger+"_"+vsTime+".root")
-                canv.SaveAs(outFolder+"/"+prefix+trigger+"_"+vsTime+".png")
+            if vs in ["vsTime","vsFill"]: 
+                # make trigger cross sections plots vs time, showing the pileup_vs on the right axis
+                from tools import addPileUp
+                from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel
+                xsecLabel = xsecLabel%(refLumi/1E34)
+                print("xsecLabel %s"%xsecLabel)
+                setStyle(pileup_vs, puColor)
+                puScaleMax = 1.1*pileup_vs.GetMaximum()
+                for trigger in xsec_vs:
+                    xsec_vs[trigger].SetTitle(title_vsTime)
+                    if vs == "vsFill":
+                        xsec_vs[trigger].GetXaxis().SetTitle(fillLabel)
+                    elif vs == "vsTime":
+                        xsec_vs[trigger].GetXaxis().SetTitle(timeLabel)
+                    if useRate:
+                        xsec_vs[trigger].GetYaxis().SetTitle(ratesLabel)
+                    else:
+                        xsec_vs[trigger].GetYaxis().SetTitle(xsecLabel)
+                    xsec_vs[trigger].GetYaxis().SetRangeUser(xsec_vs[trigger].GetMinimum()*0.9,xsec_vs[trigger].GetMaximum()*1.1)
+                    xsec_vs[trigger].Draw("e1")
+            #        puScaleMin = xsec_vs[trigger].GetMinimum()/xsec_vs[trigger].GetMaximum()*puScaleMax
+                    pileup_vs_scaled, rightaxis = addPileUp(canv, pileup_vs, puScaleMax, pileupLabel)
+                    pileup_vs_scaled.Draw("P, same")
+                    rightaxis.Draw("") 
+                    xsec_vs[trigger].Draw("e1,same") ##keep pileup_vs in backgroup
+                    if not useRate:
+                        fits[trigger].Draw("same")
+                    leg = createLegend()
+                    leg.AddEntry(pileup_vs_scaled,"pileup","p")
+                    leg.AddEntry(xsec_vs[trigger],trigger,legStyle)
+                    leg.Draw()
+                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_"+vs+".root")
+                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_"+vs+".png")
+    #                1/0
             
-        from tools import getPlotVsNewVar        
-        
-        # make trigger cross sections plots vs integrated lumi, showing the pileup_vsTime on the right axis
-        xsec_vsLum = {}
-        pileup_vsLum = getPlotVsNewVar(pileup_vsTime, intLumi_vsTime)
-        for trigger in xsec_vsTime:
-            leg = createLegend()
-            xsec_vsLum[trigger] = getPlotVsNewVar(xsec_vsTime[trigger], intLumi_vsTime) #convert xsec_vsTime in xsec_vsLum using intLumi_vsTime
-            setStyle(xsec_vsLum[trigger],xsec_vsTime[trigger].GetLineColor())
-            xsec_vsLum[trigger].SetTitle(title_vsLumi)
-            xsec_vsLum[trigger].GetXaxis().SetTitle(intLumiLabel)
-            if useRate:
-                xsec_vsLum[trigger].GetYaxis().SetTitle(ratesLabel)
-            else:
-                xsec_vsLum[trigger].GetYaxis().SetTitle(xsecLabel)
-            xsec_vsLum[trigger].GetYaxis().SetRangeUser(xsec_vsTime[trigger].GetMinimum()*0.9,xsec_vsTime[trigger].GetMaximum()*1.1)
-            xsec_vsLum[trigger].Draw("AP")
-            if not useRate:
-                fits[trigger].Draw("same")
-            pileup_vsTime_scaled, rightaxis = addPileUp(canv, pileup_vsLum, puScaleMax, pileupLabel)
-            pileup_vsTime_scaled.Draw("P, same")
-    #        xsec_vsLum[trigger].Draw("P") ##keep pileup_vsTime in backgroup
-            rightaxis.Draw("") 
-            leg.AddEntry(pileup_vsTime_scaled,"pileup_vsTime","p")
-            leg.AddEntry(xsec_vsTime[trigger],trigger,legStyle) # or lep or f</verbatim>
-            leg.Draw()
-            canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsIntLumi.root")
-            canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsIntLumi.png")
-        
-        
-        # make trigger cross sections plots vs pileup_vsTime
-        if vsTime == "vsTime": 
-            xsec_vsPU = {}
-            for trigger in xsec_vsTime:
-                leg = createLegend()
-                xsec_vsPU[trigger] = getPlotVsNewVar(xsec_vsTime[trigger], pileup_vsTime) #convert xsec_vsTime in xsec_vsPU using intLumi_vsTime
-                setStyle(xsec_vsPU[trigger],xsec_vsTime[trigger].GetLineColor())
-                xsec_vsPU[trigger].SetTitle(title_vsLumi)
-                xsec_vsPU[trigger].GetXaxis().SetTitle(pileupLabel)
-                if useRate:
-                    xsec_vsPU[trigger].GetYaxis().SetTitle(ratesLabel)
-                else:
-                    xsec_vsPU[trigger].GetYaxis().SetTitle(xsecLabel)
-                xsec_vsPU[trigger].GetYaxis().SetRangeUser(xsec_vsTime[trigger].GetMinimum()*0.9,xsec_vsTime[trigger].GetMaximum()*1.1)
-                xsec_vsPU[trigger].Draw("AP")
-                if not useRate:
-                    fits[trigger].Draw("same")
-                leg.AddEntry(xsec_vsTime[trigger],trigger,legStyle) # or lep or f</verbatim>
-                leg.Draw()
-                canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsPU.root")
-                canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsPU.png")
-        del canv
+            from tools import getPlotVsNewVar        
+            
+            # make trigger cross sections plots vs integrated lumi, showing the pileup_vs on the right axis
+            if vs == "vsIntLumi": 
+                xsec_vsLum = {}
+                pileup_vsLum = getPlotVsNewVar(pileup_vs, intLumi_vs)
+                for trigger in xsec_vs:
+                    leg = createLegend()
+                    xsec_vsLum[trigger] = getPlotVsNewVar(xsec_vs[trigger], intLumi_vs) #convert xsec_vs in xsec_vsLum using intLumi_vs
+                    setStyle(xsec_vsLum[trigger],xsec_vs[trigger].GetLineColor())
+                    xsec_vsLum[trigger].SetTitle(title_vsLumi)
+                    xsec_vsLum[trigger].GetXaxis().SetTitle(intLumiLabel)
+                    if useRate:
+                        xsec_vsLum[trigger].GetYaxis().SetTitle(ratesLabel)
+                    else:
+                        xsec_vsLum[trigger].GetYaxis().SetTitle(xsecLabel)
+                    xsec_vsLum[trigger].GetYaxis().SetRangeUser(xsec_vs[trigger].GetMinimum()*0.9,xsec_vs[trigger].GetMaximum()*1.1)
+                    xsec_vsLum[trigger].Draw("AP")
+                    if not useRate:
+                        fits[trigger].Draw("same")
+                    pileup_vs_scaled, rightaxis = addPileUp(canv, pileup_vsLum, puScaleMax, pileupLabel)
+                    pileup_vs_scaled.Draw("P, same")
+                    rightaxis.Draw("") 
+                    xsec_vsLum[trigger].Draw("P") ##keep pileup_vs in backgroup
+                    leg.AddEntry(pileup_vs_scaled,"pileup","p")
+                    leg.AddEntry(xsec_vs[trigger],trigger,legStyle) # or lep or f</verbatim>
+                    leg.Draw()
+                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsIntLumi.root")
+                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsIntLumi.png")
+            
+            
+            # make trigger cross sections plots vs pileup_vs
+            if vs == "vsPU": 
+                xsec_vsPU = {}
+                for trigger in xsec_vs:
+                    leg = createLegend()
+                    xsec_vsPU[trigger] = getPlotVsNewVar(xsec_vs[trigger], pileup_vs) #convert xsec_vs in xsec_vsPU using intLumi_vs
+                    setStyle(xsec_vsPU[trigger],xsec_vs[trigger].GetLineColor())
+                    xsec_vsPU[trigger].SetTitle(title_vsLumi)
+                    xsec_vsPU[trigger].GetXaxis().SetTitle(pileupLabel)
+                    if useRate:
+                        xsec_vsPU[trigger].GetYaxis().SetTitle(ratesLabel)
+                    else:
+                        xsec_vsPU[trigger].GetYaxis().SetTitle(xsecLabel)
+                    xsec_vsPU[trigger].GetYaxis().SetRangeUser(xsec_vs[trigger].GetMinimum()*0.9,xsec_vs[trigger].GetMaximum()*1.1)
+                    xsec_vsPU[trigger].Draw("AP")
+                    if not useRate:
+                        fits[trigger].Draw("same")
+                    leg.AddEntry(xsec_vs[trigger],trigger,legStyle) # or lep or f</verbatim>
+                    xsec_vsPU[trigger].Draw("P") ##keep pileup_vs in backgroup
+                    leg.Draw()
+                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsPU.root")
+                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsPU.png")
+            del canv
 
