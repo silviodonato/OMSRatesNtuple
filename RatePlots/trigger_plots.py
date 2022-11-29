@@ -22,7 +22,7 @@ chain = ROOT.TChain("tree")
 
 folder = "/eos/user/s/sdonato/public/OMS_rates/"
 #folder = "/run/user/1000/gvfs/sftp:host=lxplus.cern.ch,user=sdonato/afs/cern.ch/user/s/sdonato/AFSwork/ratemon/ratemon/"
-folder = "/home/sdonato/CMS/OMS_plots/OMS_ntuples/"
+#folder = "/home/sdonato/CMS/OMS_plots/OMS_ntuples/"
 plotsFolder = "plots/"
 #useRate = False
 
