@@ -164,8 +164,11 @@ def readOptions(args, triggers, selections):
     folder = args.input
     plotFolder = args.output
     if args.triggers: triggers = args.triggers.split(",")
-    if args.selections: 
+    if args.selections:
         selections = {}
+        for s in args.selections.split(","):
+            (direct, sel) = s.split("=")
+            selections[direct] = sel
     batch = not args.nobatch
     testing = args.testing
     refLumi = float(args.refLumi)

@@ -73,7 +73,9 @@ from tools import readOptions
 useRates, vses, triggers, folder, plotsFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins = readOptions(parser.parse_args(), triggerDefault, selectionDefault)
 
 print("##### Options #####")
-print ("trigger_plots.py will produce %d x %d x %d x %d = %d plots in %s using OMS ntuples from %s, using %d lumisections per bin"%(len(useRates),len(vses),len(triggers),len(selections),len(useRates)*len(vses)*len(triggers)*len(selections), plotsFolder, folder, lumisPerBin))
+print ("trigger_plots.py will produce %d x %d x %d x %d = %d plots in %s using OMS ntuples from %s,"%(len(useRates),len(vses),len(triggers),len(selections),len(useRates)*len(vses)*len(triggers)*len(selections), plotsFolder, folder))
+if lumisPerBin>0: print("using %d lumisection per bin"%nbins)
+if nbins>0: print("using %d bins"%nbins)
 print(vses)
 print("useRates=",useRates)
 print("triggers=",triggers)
