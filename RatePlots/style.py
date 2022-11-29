@@ -3,12 +3,14 @@ from ROOT import TLegend,kBlue,kMagenta,kRed,kGreen,TStyle
 title_vsTime = "Trigger cross-section vs time"
 title_vsLumi = "Trigger cross-section vs int lumi"
 timeLabel = "days since Aug 31, 2022"
-xsecLabel = "cross section [cm-2]"
+#xsecLabel = "cross section [cm2]"
+xsecLabel = "rate at %0.1f cm-2s-1"
 ratesLabel = "rate [Hz]"
 fillLabel = "fill number"
 pileupLabel = "pileup"
 intLumiLabel = "Int. luminosity since fill %d [fb-1]"
 legStyle = "lp"
+fillLabel = "Fill number"
 
 minY=-1
 maxY=-1

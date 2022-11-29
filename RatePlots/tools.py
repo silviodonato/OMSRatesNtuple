@@ -25,7 +25,9 @@ def getCrossSection(histo, recLumi,removeOutliers=1.1):
         if lum>0 and val>=0:
             nhisto.SetBinContent(i, val/lum)
             nhisto.SetBinError(i, val**0.5/lum)
-            if removeOutliers>1 and val/lum>maxAllowedValue: nhisto.SetBinContent(i, maxAllowedValue)
+            if removeOutliers>1 and val/lum>maxAllowedValue: 
+                nhisto.SetBinContent(i, maxAllowedValue)
+                nhisto.SetBinError(i, 0) ## to avoid huge errors from crazy rates
         else:
             nhisto.SetBinContent(i, 0)
             nhisto.SetBinError(i, 0)
@@ -116,3 +118,13 @@ def getPlotVsNewVar(plot_vsOldVar, newVar_vsOldVar):
     return plot_vsLum
 
 
+def getHistoVsFillNumber(histo, fill):
+    min_ = int(fill.GetMinimum())
+    max_ = int(fill.GetMaximum())
+    nHisto = ROOT.TH1F(histo.GetName() + fill.GetName(),"" , max_-min_, min_, max_)
+    for i in range(len(histo)):
+        if histo.GetBinContent(i)>0 and fill.GetBinContent(i):
+            nHisto.Fill(fill.GetBinContent(i), histo.GetBinContent(i))
+#            print(fill.GetBinContent(i), histo.GetBinContent(i))
+    nHisto.Sumw2()
+    return nHisto

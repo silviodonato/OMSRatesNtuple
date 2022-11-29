@@ -149,4 +149,9 @@ def setTDRStyle():
   tdrStyle.SetHatchesLineWidth(5)
   tdrStyle.SetHatchesSpacing(0.05)
 
+### OMSrates changes
+  tdrStyle.SetPadLeftMargin(0.12)
+  tdrStyle.SetPadRightMargin(0.12)
+  tdrStyle.SetPadTickY(0)
+  tdrStyle.SetTitleYOffset(0.9)
   tdrStyle.cd()
