@@ -5,12 +5,14 @@ def getCrossSection(histo, recLumi,removeOutliers=1.1):
     average = 0
     count = 0
     nhisto = histo.Clone(histo.GetName()+recLumi.GetName())
+    if histo.Integral() == 0: raise Exception("getCrossSection: %s is empty"%histo.GetName())
+    if recLumi.Integral() == 0: raise Exception("getCrossSection: %s is empty"%recLumi.GetName())
     if removeOutliers>1: ##compute the median of histo/recLumi using only npointsMedian points
         y1 = histo.GetArray()
         y2 = recLumi.GetArray()
         ys = []
-        jump = float(histo.GetNbinsX())/ npointsMedian
-        for x in range(1,npointsMedian):
+        jump = max(1., float(histo.GetNbinsX())/ npointsMedian)
+        for x in range(1,min(npointsMedian,histo.GetNbinsX())):
             i = int(x*jump)
             if y1[i]>0 and y2[i]>0:
                 ys.append(y1[i]/y2[i])
