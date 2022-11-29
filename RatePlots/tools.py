@@ -19,7 +19,6 @@ def getCrossSection(histo, recLumi,removeOutliers=0.95):
                 ys.append(y1[i]/y2[i])
         maxAllowedIdx = min(int(len(ys) * (1.0-removeOutliers))-1, len(ys)-2)
         minAllowedIdx = max(int(len(ys) * (removeOutliers))+1, 0)
-        print(len(ys), minAllowedIdx, maxAllowedIdx)
         maxAllowedValue = sorted(ys)[maxAllowedIdx]
         minAllowedValue = sorted(ys)[minAllowedIdx]
 #        print ( [sorted(ys)[i] for i in range(len(ys))])
@@ -75,7 +74,6 @@ def getBinningFromMax(chain, var, selection, LS_duration, nbins):
     ntimebins =  int((timemax-timemin)/bin_size)
     timemax = timemin + bin_size*(ntimebins-1)
     del tmp
-    print("HELLO ", ntimebins, timemin, timemax)
     return ntimebins, timemin, timemax
 
 def setColor(plot, color):
@@ -175,6 +173,5 @@ def readOptions(args, triggers, selections):
     nbins = int(args.nbins)
     if nbins>0 and lumisPerBin>0: raise Exception("You have to use one and only one option between --lumisPerBin and --nbins.")
     print(args)
-    print(useRates, vses, triggers, folder, plotFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins)
     return useRates, vses, triggers, folder, plotFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins
 
