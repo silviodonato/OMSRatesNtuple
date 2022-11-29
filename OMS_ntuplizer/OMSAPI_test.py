@@ -8,7 +8,7 @@ query = omsapi.query("runs")
 query.set_verbose(False)
 query.per_page = 1000  # to get all names in one go
 query.attrs(["run_number","recorded_lumi"]) #
-query.filter("run_number", 362591, "GE")
+query.filter("run_number", 362691, "GE")
 query.filter("run_number", 362698, "LE")
 query.filter("recorded_lumi", 1., "GE")
 
