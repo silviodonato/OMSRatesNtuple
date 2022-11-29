@@ -23,7 +23,7 @@ chain = ROOT.TChain("tree")
 
 folder = "/eos/user/s/sdonato/public/OMS_rates/"
 #folder = "/run/user/1000/gvfs/sftp:host=lxplus.cern.ch,user=sdonato/afs/cern.ch/user/s/sdonato/AFSwork/ratemon/ratemon/"
-#folder = "/home/sdonato/CMS/OMS_plots/OMS_ntuples/"
+folder = "/home/sdonato/CMS/OMS_plots/OMS_ntuples/"
 plotsFolder = "plots/"
 #useRate = False
 
@@ -34,26 +34,27 @@ folderSelection = {
 }
 
 triggers = [
-    "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v",
-    "HLT_IsoMu24_v",
-    "HLT_Ele30_WPTight_Gsf_v",
-    "HLT_QuadPFJet70_50_40_35_PFBTagParticleNet_2BTagSum0p65_v" ,
-    "HLT_DoubleEle7p5_eta1p22_mMax6_v",
-    "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF_v",
-    "AlCa_PFJet40_v",
-    "HLT_AK8PFJet250_SoftDropMass40_PFAK8ParticleNetBB0p35_v",
-    "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v",
-    "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_Mass55_v",
-    "HLT_AK8PFJet420_TrimMass30_v",
-    "HLT_PFHT330PT30_QuadPFJet_75_60_45_40_TriplePFBTagDeepJet_4p5_v",
-    "L1_SingleIsoEG30er2p5",
-    "L1_SingleEG36er2p5",
-    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
-    "L1_DoubleIsoTau34er2p1",
-    "L1_LooseIsoEG30er2p1_HTT100er",
-    "L1_SingleMu22",
-    "L1_HTT360er",
-    "L1_ETMHF90",
+#    "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v",
+#    "HLT_IsoMu24_v",
+#    "HLT_Ele30_WPTight_Gsf_v",
+#    "HLT_QuadPFJet70_50_40_35_PFBTagParticleNet_2BTagSum0p65_v" ,
+#    "HLT_DoubleEle7p5_eta1p22_mMax6_v",
+#    "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF_v",
+#    "AlCa_PFJet40_v",
+#    "HLT_AK8PFJet250_SoftDropMass40_PFAK8ParticleNetBB0p35_v",
+#    "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v",
+#    "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_Mass55_v",
+#    "HLT_AK8PFJet420_TrimMass30_v",
+#    "HLT_PFHT330PT30_QuadPFJet_75_60_45_40_TriplePFBTagDeepJet_4p5_v",
+#    "L1_SingleIsoEG30er2p5",
+#    "L1_SingleEG36er2p5",
+#    "L1_DoubleMu0er2p0_SQ_OS_dEta_Max1p6",
+#    "L1_DoubleIsoTau34er2p1",
+#    "L1_LooseIsoEG30er2p1_HTT100er",
+#    "L1_SingleMu22",
+#    "L1_HTT360er",
+#    "L1_ETMHF90",
+    "L1_DoubleEG_LooseIso25_LooseIso12_er1p5",
 ]
 
 #for tr in triggerColors: triggerColors[tr]= ROOT.kBlue
@@ -157,12 +158,12 @@ for selFolder in folderSelection:
     intLumi.SetTitle("")
     intLumi.GetXaxis().SetTitle(timeLabel)
     intLumi.GetYaxis().SetTitle(intLumiLabel)
-    intLumi.Draw("P")
+    intLumi.Draw("HIST")
     canv.Update()
     canv.Modify()
     print("C")
     canv.SaveAs(outFolder+"/AintLumi_vsTime.root")
-#    canv.SaveAs(outFolder+"/AintLumi_vsTime.png")
+    canv.SaveAs(outFolder+"/AintLumi_vsTime.png")
     print("C")
 
     # plot the fill number vs integrated luminosity
