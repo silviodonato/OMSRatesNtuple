@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
 import ROOT
-import CMS_lumi, tdrstyle #https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines
-tdrstyle.setTDRStyle()
+import tdrstyle #https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines
+
+tdrstyle = tdrstyle.setTDRStyle()
+tdrstyle.cd()
 import os
 
 chain = ROOT.TChain("tree")
@@ -150,6 +152,8 @@ ROOT.gStyle.SetOptFit(0)
 chain.GetEvent(0)
 firstFill = chain.fill
 
+chain.Draw("fill")
+
 ## Skip missing triggers
 for trigger in triggers[:]:
     if not hasattr(chain, trigger):
@@ -206,7 +210,7 @@ for selFolder in selections:
     intLumi_vsFill = getHistoVsFillNumber(intLumi_vsTime, fillNumber_vsTime)
 #    pileup_vsTime.Divide(count_vsTime) 
 #    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
-    recLumi_vsFill.Draw()
+#    recLumi_vsFill.Draw()
     
     pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
     pileup_vsTime.Divide(count_vsTime) 
@@ -217,6 +221,7 @@ for selFolder in selections:
     # init canvas
     from style import res_X,res_Y, gridX, gridY
     canv = ROOT.TCanvas("canv","",res_X,res_Y)
+    canv.UseCurrentStyle()
     canv.SetGridx(gridX)
     canv.SetGridy(gridY)
     
@@ -260,7 +265,7 @@ for selFolder in selections:
     from style import getColor
     for i, trigger in enumerate(triggers):
         print("Getting histo for ", trigger)
-        histos_vsTime[trigger] = getHisto("%s"%trigger, chain, timeVar, binning, selection) #Alt$(%s,1) ?
+        histos_vsTime[trigger] = getHisto("Alt$(%s,1)"%trigger, chain, timeVar, binning, selection) #Alt$(%s,1) ?
         histos_vsFill[trigger] = getHistoVsFillNumber(histos_vsTime[trigger], fillNumber_vsTime)
         setStyle(histos_vsTime[trigger], getColor(i))
         setStyle(histos_vsFill[trigger], getColor(i))
