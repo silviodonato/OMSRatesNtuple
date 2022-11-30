@@ -66,7 +66,7 @@ parser.add_argument('--runMin', default=362719 , help='Run min. The minimum run 
 parser.add_argument('--runMax', default=1000000 , help='Run max')
 parser.add_argument('--triggers', default="" , help='List of trigger used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used. Example: --triggers HLT_IsoMu24_v,AlCa_PFJet40_v')
 parser.add_argument('--selections', default="" , help='List of selections used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used.')
-parser.add_argument('--input', default="/afs/cern.ch/work/s/sdonato/public/OMS_ntuples" , help='Input folder containing the OMS ntuples')
+parser.add_argument('--input', default="/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v1.0/" , help='Input folder containing the OMS ntuples')
 parser.add_argument('--output', default="plots/" , help='Folder of the output plots')
 parser.add_argument('--refLumi', default=2E34 , help='Reference rate used in the cross-section plots.')
 parser.add_argument('--lumisPerBin', default=-1 , help='Number of lumisections that will be merged in the plots. Cannot work with --nbins')
