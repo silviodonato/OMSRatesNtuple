@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
 import ROOT
-import CMS_lumi, tdrstyle #https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines
-tdrstyle.setTDRStyle()
+import tdrstyle #https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines
+
+tdrstyle = tdrstyle.setTDRStyle()
+tdrstyle.cd()
 import os
 
 chain = ROOT.TChain("tree")
@@ -14,16 +16,12 @@ selectionDefault = {
 }
 
 triggerDefault = [
+    ## since  355678
     "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v",
     "HLT_IsoMu24_v",
     "HLT_Ele30_WPTight_Gsf_v",
     "HLT_QuadPFJet70_50_40_35_PFBTagParticleNet_2BTagSum0p65_v" ,
-    "HLT_DoubleEle7p5_eta1p22_mMax6_v",
-    "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF_v",
-    "AlCa_PFJet40_v",
     "HLT_AK8PFJet250_SoftDropMass40_PFAK8ParticleNetBB0p35_v",
-    "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v",
-    "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_Mass55_v",
     "HLT_AK8PFJet420_TrimMass30_v",
     "HLT_PFHT330PT30_QuadPFJet_75_60_45_40_TriplePFBTagDeepJet_4p5_v",
     "L1_SingleIsoEG30er2p5",
@@ -35,7 +33,17 @@ triggerDefault = [
     "L1_HTT360er",
     "L1_ETMHF90",
     "L1_DoubleEG_LooseIso25_LooseIso12_er1p5",
+
+    ## since  356409
+    "HLT_DoubleEle7p5_eta1p22_mMax6_v",
+    "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF_v",
+    "AlCa_PFJet40_v",
+    "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1_v",
+    "HLT_Diphoton30_18_R9IdL_AND_HE_AND_IsoCaloId_Mass55_v",
+
+    ## since 359530
 ]
+
 
 #for tr in triggerColors: triggerColors[tr]= ROOT.kBlue
 
@@ -58,7 +66,7 @@ parser.add_argument('--runMin', default=362719 , help='Run min. The minimum run 
 parser.add_argument('--runMax', default=1000000 , help='Run max')
 parser.add_argument('--triggers', default="" , help='List of trigger used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used. Example: --triggers HLT_IsoMu24_v,AlCa_PFJet40_v')
 parser.add_argument('--selections', default="" , help='List of selections used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used.')
-parser.add_argument('--input', default="/eos/user/s/sdonato/public/OMS_rates/" , help='Input folder containing the OMS ntuples')
+parser.add_argument('--input', default="/afs/cern.ch/work/s/sdonato/public/OMS_ntuples" , help='Input folder containing the OMS ntuples')
 parser.add_argument('--output', default="plots/" , help='Folder of the output plots')
 parser.add_argument('--refLumi', default=2E34 , help='Reference rate used in the cross-section plots.')
 parser.add_argument('--lumisPerBin', default=-1 , help='Number of lumisections that will be merged in the plots. Cannot work with --nbins')
@@ -150,6 +158,8 @@ ROOT.gStyle.SetOptFit(0)
 chain.GetEvent(0)
 firstFill = chain.fill
 
+chain.Draw("fill")
+
 ## Skip missing triggers
 for trigger in triggers[:]:
     if not hasattr(chain, trigger):
@@ -206,7 +216,7 @@ for selFolder in selections:
     intLumi_vsFill = getHistoVsFillNumber(intLumi_vsTime, fillNumber_vsTime)
 #    pileup_vsTime.Divide(count_vsTime) 
 #    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
-    recLumi_vsFill.Draw()
+#    recLumi_vsFill.Draw()
     
     pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
     pileup_vsTime.Divide(count_vsTime) 
@@ -217,6 +227,7 @@ for selFolder in selections:
     # init canvas
     from style import res_X,res_Y, gridX, gridY
     canv = ROOT.TCanvas("canv","",res_X,res_Y)
+    canv.UseCurrentStyle()
     canv.SetGridx(gridX)
     canv.SetGridy(gridY)
     
@@ -258,12 +269,14 @@ for selFolder in selections:
     histos_vsFill = {}
     from tools import setStyle
     from style import getColor
-    for i, trigger in enumerate(triggers):
+    for i, trigger in enumerate(triggers[:]):
         print("Getting histo for ", trigger)
-        histos_vsTime[trigger] = getHisto("%s"%trigger, chain, timeVar, binning, selection) #Alt$(%s,1) ?
+        histos_vsTime[trigger] = getHisto("Alt$(%s,1)"%trigger, chain, timeVar, binning, selection) #Alt$(%s,1) ?
         histos_vsFill[trigger] = getHistoVsFillNumber(histos_vsTime[trigger], fillNumber_vsTime)
         setStyle(histos_vsTime[trigger], getColor(i))
         setStyle(histos_vsFill[trigger], getColor(i))
+        if histos_vsTime[trigger].Integral()==0:
+            triggers.remove(trigger)
     for useRate in useRates:
         for vs in vses:
 #        for vs in ["vsTime","vsFill","vsPU"]:

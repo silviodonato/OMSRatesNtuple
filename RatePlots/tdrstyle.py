@@ -82,8 +82,8 @@ def setTDRStyle():
 # Margins:
   tdrStyle.SetPadTopMargin(0.05)
   tdrStyle.SetPadBottomMargin(0.13)
-  tdrStyle.SetPadLeftMargin(0.12)
-  tdrStyle.SetPadRightMargin(0.12)
+  tdrStyle.SetPadLeftMargin(0.16)
+  tdrStyle.SetPadRightMargin(0.02)
 
 # For the Global title:
 
@@ -104,11 +104,11 @@ def setTDRStyle():
 
   tdrStyle.SetTitleColor(1, "XYZ")
   tdrStyle.SetTitleFont(42, "XYZ")
-  tdrStyle.SetTitleSize(0.05, "XYZ")
+  tdrStyle.SetTitleSize(0.06, "XYZ")
   # tdrStyle.SetTitleXSize(Float_t size = 0.02) # Another way to set the size?
   # tdrStyle.SetTitleYSize(Float_t size = 0.02)
   tdrStyle.SetTitleXOffset(0.9)
-  tdrStyle.SetTitleYOffset(0.9)
+  tdrStyle.SetTitleYOffset(1.25)
   # tdrStyle.SetTitleOffset(1.1, "Y") # Another way to set the Offset
 
 # For the axis labels:
@@ -116,7 +116,7 @@ def setTDRStyle():
   tdrStyle.SetLabelColor(1, "XYZ")
   tdrStyle.SetLabelFont(42, "XYZ")
   tdrStyle.SetLabelOffset(0.007, "XYZ")
-  tdrStyle.SetLabelSize(0.04, "XYZ")
+  tdrStyle.SetLabelSize(0.05, "XYZ")
 
 # For the axis:
 
@@ -125,7 +125,7 @@ def setTDRStyle():
   tdrStyle.SetTickLength(0.03, "XYZ")
   tdrStyle.SetNdivisions(510, "XYZ")
   tdrStyle.SetPadTickX(1)  # To get tick marks on the opposite side of the frame
-#  tdrStyle.SetPadTickY()
+  tdrStyle.SetPadTickY(1)
 
 # Change for log plots:
   tdrStyle.SetOptLogx(0)
@@ -133,7 +133,7 @@ def setTDRStyle():
   tdrStyle.SetOptLogz(0)
 
 # Postscript options:
-  tdrStyle.SetPaperSize(40.,40.)
+  tdrStyle.SetPaperSize(20.,20.)
   # tdrStyle.SetLineScalePS(Float_t scale = 3)
   # tdrStyle.SetLineStyleString(Int_t i, const char* text)
   # tdrStyle.SetHeaderPS(const char* header)
@@ -149,9 +149,14 @@ def setTDRStyle():
   tdrStyle.SetHatchesLineWidth(5)
   tdrStyle.SetHatchesSpacing(0.05)
 
-### OMSrates changes
+  ## Mod for OMS rates with two scales:
   tdrStyle.SetPadLeftMargin(0.12)
   tdrStyle.SetPadRightMargin(0.12)
   tdrStyle.SetPadTickY(0)
-  tdrStyle.SetTitleYOffset(0.9)
-  tdrStyle.cd()
+  tdrStyle.SetTitleXOffset(1.0)
+  tdrStyle.SetTitleYOffset(1.4)
+  tdrStyle.SetTitleSize(0.04, "XYZ")
+  tdrStyle.SetLabelSize(0.03, "XYZ")
+  
+  return tdrStyle
+#  tdrStyle.cd()
