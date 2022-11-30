@@ -7,7 +7,7 @@ and from https://gitlab.cern.ch/cms-tsg-fog/ratemon/-/tree/master/ .
 The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 """
 
-run_min = 355678 ## July 17, before this run the lumi is stored using a different unit
+run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
 run_max = 999000
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
@@ -17,6 +17,10 @@ outputFolder = "."
 overwrite = False #overwrite output files
 requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
 badRuns = [360088, 357112,357104, 355872] #the code crashes on these runs
+
+#load json files from https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/
+muonJsonFile = "Cert_Collisions2022_355100_362439_Muon.json" 
+goldenJsonFile = "Cert_Collisions2022_355100_362439_Golden.json" 
 
 ## Max limits in queries, used for testing
 minLS = 0
@@ -44,10 +48,11 @@ parser = argparse.ArgumentParser(
 #parser.add_argument( 'run', type = int, help = 'run for which rates should be retrieved' )
 #group = parser.add_mutually_exclusive_group(required=True)
 #group.add_argument( '--pattern', help = 'regexp pattern for algos for which max rate will be retrieved, example: ".*EG.*"' )
-#group.add_argument( '--algo', help = 'name of algorithm for which max rate will be retrieved' )
+parser.add_argument( '--split', default="-1/-1", help = 'split runs for simultaneous queries . Example: "5/10" will run only runs with run%10==5' )
 #group.add_argument( '--bits', nargs='+', help = 'list of algo bits for which max rate will be retrieved')
 
 args = parser.parse_args()
+job_i, job_tot = [int(v) for v in args.split.split("/")]
 
 #omsapi = OMSAPI('http://cmsoms.cms/agg/api/','v1', cert_verify=False)
 omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
@@ -63,8 +68,10 @@ L1Counts_var = {}
 ### Define tree variables, option https://root.cern.ch/doc/master/classTTree.html 
 def SetVariable(tree,name,option='F',lenght=1,maxLenght=100):
     if option == 'F': arraytype='f'
+    elif option == 'f': arraytype='f'
     elif option == 'O': arraytype='i'
     elif option == 'I': arraytype='l'
+    elif option == 'i': arraytype='l'
     else:
         print('option ',option,' not recognized.')
         return
@@ -79,15 +86,25 @@ def SetVariable(tree,name,option='F',lenght=1,maxLenght=100):
 
 run_recLumi = 0.
 
+import json
+muonJsonDict = json.load(open(muonJsonFile))
+goldenJsonDict = json.load(open(goldenJsonFile))
+
+def json( dic, run , lumi):
+    if str(run) in dic:
+        if lumi>=dic[str(run)][0][0] and lumi<=dic[str(run)][0][1]:
+            return True 
+    return False
+
 #print(l1BitMap)
+
 
 ###############################################
 
 query = omsapi.query("runs")
 query.set_verbose(False)
 query.per_page = max_pages  # to get all names in one go
-query.attrs(["run_number","recorded_lumi","components"]) #
-#query.filter("components", "TRACKER")
+query.attrs(["run_number","recorded_lumi","components","hlt_key","l1_key"]) #
 query.filter("run_number", run_min, "GE")
 query.filter("run_number", run_max, "LE")
 query.filter("recorded_lumi", minimum_integratedLumi, "GE") ## require at least minimum_integratedLumi [pb-1] of lumi per run
@@ -98,10 +115,40 @@ data = oms['data']
 
 runs = []
 for d in reversed(data):
-#    if "TRACKER" in d['components']:
-        runs.append(d['attributes']['run_number'])
-        print(d['attributes']['run_number'], d['attributes']['recorded_lumi'], len(d['attributes']['components']))
+    run = d['attributes']['run_number']
+    hltkey = d['attributes']['hlt_key']
+    print(run , d['attributes']['recorded_lumi'], len(d['attributes']['components']), d['attributes']['l1_key'])
+    if job_i>=0 and job_tot>0:
+        if run%job_tot==job_i:
+            runs.append(run)
+    else:
+        runs.append(run)
 
+#get HLT prescale tables
+#query = omsapi.query("hltprescalesets")
+#query.filter("config_name", "/cdaq/physics/Run2022/2e34/v1.5.0/HLT/V13" )
+##query.filter("path_name", 'HLT_PFMETTypeOne140_PFMHT140_IDTight_v13' )
+#query.filter("prescale_sequence", "200" )
+##query.filter("prescale_index", "4" )
+#resp = query.data()
+#oms = resp.json()
+#data = oms['data']
+#for i in data: print(i,"\n")
+
+#    query = omsapi.query("datasetrates/datasets")
+
+#    ## Filter run
+#    query.filter("run_number", run )
+#    query.attr("datasets")
+
+#    # Execute query and fetch data
+#    resp = query.data()
+#    oms = resp.json()   # all the data returned by OMS
+#    data = oms['data']
+
+#    datasets = data['attributes']['datasets']
+
+print("Doing %d runs="%len(runs),runs)
 for run in runs:
     fName = outputFolder+"/"+str(run)+".root"
     if os.path.isfile(fName):
@@ -124,9 +171,10 @@ for run in runs:
     lhc_flags = ['beams_stable','beam_present','beam2_stable','beam2_present','physics_flag']
     lhc_int = ['run_number','fill_number','lumisection_number']
     lhc_float = ['recorded_lumi_per_lumisection','delivered_lumi_per_lumisection','pileup']
-    lhc_int_add = ["year","month","day","hour","minute","second","time","cms_ready"]
+    lhc_int_add = ["year","month","day","hour","minute","second","time","cms_ready","golden_json","muon_json"]
     lhc_float_add = ["deadtime"]
     cms_ready_vars = [flag for flag in det_flags if not flag in ['rp_sect_45', 'rp_sect_56', 'rp_time','gem']]
+
 
     lumisections_vars = {}
     for var in det_flags+lhc_flags+lhc_int+lhc_int_add+lhc_float+lhc_float_add:
@@ -157,6 +205,8 @@ for run in runs:
             if not row['attributes'][var+"_ready"]:
                 cms_ready = False
         lumisections['cms_ready'].append(cms_ready)
+        lumisections['muon_json'].append(json(muonJsonDict, run, row['attributes']['lumisection_number']))
+        lumisections['golden_json'].append(json(goldenJsonDict, run, row['attributes']['lumisection_number']))
 
 
     if run_recLumi<minimum_integratedLumi:
@@ -326,25 +376,26 @@ for run in runs:
     f = ROOT.TFile(fName,"recreate")
     tree = ROOT.TTree("tree","tree")
     
-    lumi = SetVariable(tree,"lumi",'I',1)
-    run = SetVariable(tree,"run",'I',1)
+    lumi = SetVariable(tree,"lumi",'i',1,1)
+    run_ = SetVariable(tree,"run",'i',1,1)
+    run_[0] = run
     
     HLTAccepted = {}
     for path in reversed(HLTPaths):
-        HLTAccepted[path] = SetVariable(tree, stripVersion(path),'I',1)
+        HLTAccepted[path] = SetVariable(tree, stripVersion(path),'i',1,1)
     
     for var in det_flags+lhc_flags:
-        lumisections_vars[var] = SetVariable(tree,var,'O',1)
+        lumisections_vars[var] = SetVariable(tree,var,'O',1,1)
     
     for var in lhc_int+lhc_int_add:
         var = var.replace("_number","") ## lumisection_number -> lumisection
-        lumisections_vars[var] = SetVariable(tree,var,'I',1)
+        lumisections_vars[var] = SetVariable(tree,var,'i',1,1)
     
     for var in lhc_float+lhc_float_add:
-        lumisections_vars[var] = SetVariable(tree,var,'F',1)
+        lumisections_vars[var] = SetVariable(tree,var,'f',1,1)
     
     for bit in l1BitMap:
-        L1Counts_var[bit] = SetVariable(tree,l1BitMap[bit],'I',1)
+        L1Counts_var[bit] = SetVariable(tree,l1BitMap[bit],'i',1,1)
     
     ##########################################################
     
