@@ -148,6 +148,9 @@ for run in sorted(runs):
     if os.path.getsize(fName) > 1000 :
         chain.AddFile(fName)
 
+#chain = ROOT.TChain("tree")
+#chain.AddFile("/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root")
+
 ## Constants
 secInDay = 24.*60*60
 LS_seconds = 2**18 / 11245.5 
