@@ -315,24 +315,24 @@ for run in runs:
     query.set_verbose(False)
     query.per_page = max_pages  # to get all names in one go
 
-    # Projection. Specify attributes you want to fetch
-    query.attrs(["pre_dt_counter"]) #"name","bit", see https://cmsoms.cern.ch/agg/api/v1/l1algorithmtriggers/362616__1__1
+#    # Projection. Specify attributes you want to fetch
+#    query.attrs(["pre_dt_before_prescale_counter"]) #"name","bit", see https://cmsoms.cern.ch/agg/api/v1/l1algorithmtriggers/362616__1__1
 
-    #print(l1Bits)
-    lumis = range(0,2)
-    #bit = l1Bits[0]
-    query.filter("run_number", run )
-#    query.filter("first_lumisection_number", minLS, operator="GE")
-#    query.filter("last_lumisection_number", maxLS, operator="LE")
+#    #print(l1Bits)
+#    lumis = range(0,2)
+#    #bit = l1Bits[0]
+#    query.filter("run_number", run )
+##    query.filter("first_lumisection_number", minLS, operator="GE")
+##    query.filter("last_lumisection_number", maxLS, operator="LE")
 
-    #query.filter("bit", bit)  # returns data per lumisection
-    #query.custom("group[granularity]", "lumisection")
-    data = query.data().json()['data']
-    query.verbose = False
-    max = 0.0
-    lumisection = 4
+#    #query.filter("bit", bit)  # returns data per lumisection
+#    #query.custom("group[granularity]", "lumisection")
+#    data = query.data().json()['data']
+#    query.verbose = False
+#    max = 0.0
+#    lumisection = 4
 
-    #362616__383__25
+#    #362616__383__25
 
     ###############
     query = omsapi.query("l1algorithmtriggers")
@@ -343,8 +343,8 @@ for run in runs:
     firstPath = True
     L1_Counters = {}
     L1lumis = []
-#    query.attrs(["pre_dt_counter","last_lumisection_number","first_lumisection_number","last_lumisection_number"]) #
-    query.attrs(["pre_dt_counter","last_lumisection_number","first_lumisection_number"]) #
+#    query.attrs(["pre_dt_before_prescale_counter","last_lumisection_number","first_lumisection_number","last_lumisection_number"]) #
+    query.attrs(["pre_dt_before_prescale_counter","last_lumisection_number","first_lumisection_number"]) #
     for L1_bit in list(l1BitMap.keys())[:maxL1Bits]:
     #    print(L1_bit)
         L1_Counters[L1_bit] = []
@@ -362,12 +362,12 @@ for run in runs:
         data = oms['data']
         for row in data:
     #        run[0], aaa, new_lumi = [int(el) for el in row['id'].split("__")]
-            L1_Counters[L1_bit].append(int(row['attributes']['pre_dt_counter']))
+            L1_Counters[L1_bit].append(int(row['attributes']['pre_dt_before_prescale_counter']))
         if L1_bit==0:
             for row in data:
         #        run[0], aaa, new_lumi = [int(el) for el in row['id'].split("__")]
                 L1lumis.append(row['attributes']['last_lumisection_number'])
-        query.attrs(["pre_dt_counter"]) #
+        query.attrs(["pre_dt_before_prescale_counter"]) #
     
     ###############
     
@@ -389,7 +389,7 @@ for run in runs:
     
     for var in lhc_int+lhc_int_add:
         var = var.replace("_number","") ## lumisection_number -> lumisection
-        lumisections_vars[var] = SetVariable(tree,var,'i',1,1)
+        lumisections_vars[var] = SetVariable(tree,var,'I',1,1)
     
     for var in lhc_float+lhc_float_add:
         lumisections_vars[var] = SetVariable(tree,var,'f',1,1)

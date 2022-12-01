@@ -10,9 +10,8 @@ import os
 chain = ROOT.TChain("tree")
 
 selectionDefault = {
-    "PU50_60": "cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60",
-    "inclusive": "cms_ready && beams_stable && beam2_stable",
-#    "RunE": "cms_ready && beams_stable && beam2_stable",
+    "PU50_60": "golden_json && pileup>0 && pileup<60",
+    "inclusive": "golden_json",
 }
 
 triggerDefault = [
@@ -57,20 +56,21 @@ parser = argparse.ArgumentParser(
     )
 
 parser.add_argument('--rates', action='store_const', const=True, default=False, help='Make rates plots')
-parser.add_argument('--xsect', action='store_const', const=True, default=True, help='Make cross sections plots')
+parser.add_argument('--xsect', action='store_const', const=True, default=False, help='Make cross sections plots. Selected by default if no --rates nor --rates are defined')
 parser.add_argument('--vsFill', action='store_const', const=True, default=False, help='Make plots vs fill number')
-parser.add_argument('--vsPU', action='store_const', const=True, default=False, help='Make plots vs fill number')
-parser.add_argument('--vsIntLumi', action='store_const', const=True, default=True, help='Make plots vs integrated luminosity')
+parser.add_argument('--vsRun', action='store_const', const=True, default=False, help='Make plots vs run number')
+parser.add_argument('--vsPU', action='store_const', const=True, default=False, help='Make plots vs pileup')
+parser.add_argument('--vsIntLumi', action='store_const', const=True, default=False, help='Make plots vs integrated luminosity. Selected by default if any --vs* flag is defined')
 parser.add_argument('--vsTime', action='store_const', const=True, default=False, help='Make plots vs days')
-parser.add_argument('--runMin', default=362719 , help='Run min. The minimum run possible run is 355678 (July 17, 2022)')
+parser.add_argument('--runMin', default=362104 , help='Run min. The minimum run possible run is 355678 (July 17, 2022)')
 parser.add_argument('--runMax', default=1000000 , help='Run max')
 parser.add_argument('--triggers', default="" , help='List of trigger used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used. Example: --triggers HLT_IsoMu24_v,AlCa_PFJet40_v')
 parser.add_argument('--selections', default="" , help='List of selections used in the plots, separated by ",". If undefined, the triggerList defined in trigger_plots.py will be used.')
-parser.add_argument('--input', default="/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v1.0/" , help='Input folder containing the OMS ntuples')
+parser.add_argument('--input', default="/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/" , help='Input folder containing the OMS ntuples')
 parser.add_argument('--output', default="plots/" , help='Folder of the output plots')
 parser.add_argument('--refLumi', default=2E34 , help='Reference rate used in the cross-section plots.')
-parser.add_argument('--lumisPerBin', default=-1 , help='Number of lumisections that will be merged in the plots. Cannot work with --nbins')
-parser.add_argument('--nbins', default=1000 , help='Number of max bins. Cannot work with --lumisPerBin')
+parser.add_argument('--lumisPerBin', default=1 , help='Number of lumisections that will be merged in the plots. Cannot work with --nbins')
+parser.add_argument('--nbins', default=-1 , help='Number of max bins. Cannot work with --lumisPerBin')
 parser.add_argument('--removeOutliers', default="0.01" , help='Percentile of data points that will excluded from the plots. This is necessary to remove the rates spikes from the plots.')
 parser.add_argument('--nobatch', action='store_const', const=True, default=False, help='Disable ROOT batch mode')
 parser.add_argument('--testing', action='store_const', const=True, default=False, help='Used for debugging/development')
@@ -144,11 +144,15 @@ for run in sorted(runs):
 secInDay = 24.*60*60
 LS_seconds = 2**18 / 11245.5 
 LS_duration = LS_seconds/ secInDay #LS in days
-#from datetime import datetime
-#offset = -(int(datetime(2022,8,31).timestamp()) - int(datetime(2023,1,1).timestamp()))  #since Nov 1, 2022 instead of #since Jan 1, 2023
-offset =5270400 ## Nov1 (ie. 0. = Nov1)
-offset =5356800 ## Oct31 (ie. 1. = Nov1)
-offset =10630800 ## Aug31 
+from datetime import datetime
+offset = -(int(datetime(2022,8,31).timestamp()) - int(datetime(2023,1,1).timestamp()))  #since Nov 1, 2022 instead of #since Jan 1, 2023
+offset = -(int(datetime(2022,10,31).timestamp()) - int(datetime(2023,1,1).timestamp()))  #since Nov 1, 2022 instead of #since Jan 1, 2023
+offset += -4294967296 ## bug fix ntuple v2.0
+#offset =5270400 ## Nov1 (ie. 0. = Nov1)
+#offset =5356800 ## Oct31 (ie. 1. = Nov1)
+#offset =10630800 ## Aug31 
+
+#1/0
 
 ROOT.gROOT.SetBatch(batch)
 ROOT.gStyle.SetOptStat(0)
@@ -157,6 +161,7 @@ ROOT.gStyle.SetOptFit(0)
 ## get fill number from the first event
 chain.GetEvent(0)
 firstFill = chain.fill
+firstRun = chain.run
 
 chain.Draw("fill")
 
@@ -193,6 +198,7 @@ for selFolder in selections:
     # get common histograms
     from tools import getHisto
     fillNumber_vsTime = getHisto("fill", chain, timeVar, binning, selection)
+    runNumber_vsTime = getHisto("run", chain, timeVar, binning, selection)
     delLumi_vsTime = getHisto("delivered_lumi_per_lumisection", chain, timeVar, binning, "1") #1000 pb-1 = fb-1
     delLumi_vsTime.Scale(1./1000)# pb-1 -> fb-1
     intLumi_vsTime = delLumi_vsTime.GetCumulative()
@@ -206,23 +212,33 @@ for selFolder in selections:
     ## take the average value per bin, instead of the sum, for non-cumulative variables
     from tools import dropError
     fillNumber_vsTime.Divide(count_vsTime) 
+    runNumber_vsTime.Divide(count_vsTime) 
     dropError(fillNumber_vsTime)
+    dropError(runNumber_vsTime)
     fillNumber_vsTime.SetMinimum(firstFill)
+    runNumber_vsTime.SetMinimum(firstRun)
+
 
     ## compute the histograms binned per fillNumber instead of run number
     from tools import getHistoVsFillNumber
     count_vsFill = getHistoVsFillNumber(count_vsTime, fillNumber_vsTime)
     recLumi_vsFill = getHistoVsFillNumber(recLumi_vsTime, fillNumber_vsTime)
     intLumi_vsFill = getHistoVsFillNumber(intLumi_vsTime, fillNumber_vsTime)
+    count_vsRun = getHistoVsFillNumber(count_vsTime, runNumber_vsTime)
+    recLumi_vsRun = getHistoVsFillNumber(recLumi_vsTime, runNumber_vsTime)
+    intLumi_vsRun = getHistoVsFillNumber(intLumi_vsTime, runNumber_vsTime)
 #    pileup_vsTime.Divide(count_vsTime) 
 #    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
 #    recLumi_vsFill.Draw()
     
+    pileup_vsRun = getHistoVsFillNumber(pileup_vsTime, runNumber_vsTime)
     pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
     pileup_vsTime.Divide(count_vsTime) 
     pileup_vsFill.Divide(count_vsFill) 
+    pileup_vsRun.Divide(count_vsRun) 
     dropError(pileup_vsTime)
     dropError(pileup_vsFill)
+    dropError(pileup_vsRun)
     
     # init canvas
     from style import res_X,res_Y, gridX, gridY
@@ -241,38 +257,50 @@ for selFolder in selections:
     canv.Update()
     canv.Modify()
     
-    canv.SaveAs(outFolder+"/AintLumi_vs.root")
-    canv.SaveAs(outFolder+"/AintLumi_vs.png")
+    canv.SaveAs(outFolder+"/AintLumi_vsTime.root")
+    canv.SaveAs(outFolder+"/AintLumi_vsTime.png")
     
     # plot the fill number vs integrated luminosity
-    from style import fillLabel, fillNumberMargin
-    lastFill = fillNumber_vsTime.GetMaximum()
-    fillNumber_vsLumi = ROOT.TGraph(len(fillNumber_vsTime))
-    npoints=0
-    for i in range(len(fillNumber_vsTime)):
-        if fillNumber_vsTime[i]>0:
-            fillNumber_vsLumi.SetPoint(npoints,intLumi_vsTime[i],fillNumber_vsTime[i])
-            npoints+=1
-    fillNumber_vsLumi.SetMarkerSize(0.5)
-    fillNumber_vsLumi.SetMarkerStyle(21)
-    fillNumber_vsLumi.SetTitle("")
-    #fillNumber_vsLumi.GetXaxis().SetRangeUser(xsec_vsLum.keys()[0].GetXaxis().GetXmin(), pileup_vs.GetXaxis().GetXmax())
-    fillNumber_vsLumi.GetXaxis().SetTitle(intLumiLabel)
-    fillNumber_vsLumi.GetYaxis().SetTitle(fillLabel)
-    fillNumber_vsLumi.SetMinimum(firstFill-fillNumberMargin)
-    fillNumber_vsLumi.SetMaximum(fillNumber_vsTime.GetMaximum()+fillNumberMargin)
-    fillNumber_vsLumi.Draw("AP")
-    canv.SaveAs(outFolder+"/AfillNumber_vsLumi.root")
-    canv.SaveAs(outFolder+"/AfillNumber_vsLumi.png")
+    from style import fillLabel, fillNumberMargin, runLabel
+    for var in ['fill','run']:
+        if var == 'fill':
+            xlabel = fillLabel
+            plotNumber_vsTime = fillNumber_vsTime
+            firstNumber = firstFill
+        elif var == 'run':
+            xlabel = runLabel
+            plotNumber_vsTime = runNumber_vsTime
+            firstNumber = firstRun
+        lastFill = plotNumber_vsTime.GetMaximum()
+        plotNumber_vsLumi = ROOT.TGraph(len(plotNumber_vsTime))
+        npoints=0
+        for i in range(len(plotNumber_vsTime)):
+            if plotNumber_vsTime[i]>0:
+                plotNumber_vsLumi.SetPoint(npoints,intLumi_vsTime[i],plotNumber_vsTime[i])
+                npoints+=1
+        plotNumber_vsLumi.SetMarkerSize(0.5)
+        plotNumber_vsLumi.SetMarkerStyle(21)
+        plotNumber_vsLumi.SetTitle("")
+        #plotNumber_vsLumi.GetXaxis().SetRangeUser(xsec_vsLum.keys()[0].GetXaxis().GetXmin(), pileup_vs.GetXaxis().GetXmax())
+        plotNumber_vsLumi.GetXaxis().SetTitle(intLumiLabel)
+        plotNumber_vsLumi.GetYaxis().SetTitle(xlabel)
+        plotNumber_vsLumi.SetMinimum(firstNumber-fillNumberMargin)
+        plotNumber_vsLumi.SetMaximum(plotNumber_vsTime.GetMaximum()+fillNumberMargin)
+        plotNumber_vsLumi.Draw("AP")
+        canv.SaveAs(outFolder+"/A%sNumber_vsLumi.root"%var)
+        canv.SaveAs(outFolder+"/A%sNumber_vsLumi.png"%var)
+        del plotNumber_vsLumi
     del canv 
     histos_vsTime = {}
     histos_vsFill = {}
+    histos_vsRun = {}
     from tools import setStyle
     from style import getColor
     for i, trigger in enumerate(triggers[:]):
         print("Getting histo for ", trigger)
         histos_vsTime[trigger] = getHisto("Alt$(%s,1)"%trigger, chain, timeVar, binning, selection) #Alt$(%s,1) ?
         histos_vsFill[trigger] = getHistoVsFillNumber(histos_vsTime[trigger], fillNumber_vsTime)
+        histos_vsRun[trigger] = getHistoVsFillNumber(histos_vsTime[trigger], runNumber_vsTime)
         setStyle(histos_vsTime[trigger], getColor(i))
         setStyle(histos_vsFill[trigger], getColor(i))
         if histos_vsTime[trigger].Integral()==0:
@@ -293,6 +321,12 @@ for selFolder in selections:
                 recLumi_vs = recLumi_vsFill
                 intLumi_vs = intLumi_vsFill
                 pileup_vs = pileup_vsFill
+            elif vs == "vsRun":
+                histos_vs = histos_vsRun
+                count_vs = count_vsRun
+                recLumi_vs = recLumi_vsRun
+                intLumi_vs = intLumi_vsRun
+                pileup_vs = pileup_vsRun
             else:
                 raise Exception("Problem with vs = %s"%vs)
             
@@ -317,6 +351,8 @@ for selFolder in selections:
                 print("Getting histo for ", trigger)
                 if vs == "vsFill":
                     histos_vs = histos_vsFill
+                elif vs == "vsRun":
+                    histos_vs = histos_vsRun
                 if useRate:  ## get cross sections [events/recolumi]
                     xsec_vs[trigger] = getCrossSection(histos_vs[trigger],count_vs,removeOutliers)
                     xsec_vs[trigger].Scale(1./LS_seconds)
@@ -326,17 +362,19 @@ for selFolder in selections:
                     fits[trigger] = createFit(xsec_vs[trigger], xsec_vs[trigger].Integral()/count_vs.Integral())
             
             from tools import addPileUp
-            from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel
+            from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel,runLabel
             puScaleMax = 1.1*pileup_vs.GetMaximum()
             setStyle(pileup_vs, puColor)
             xsecLabel = xsecLabel%(refLumi/1E34)
-            if vs in ["vsTime","vsFill"]: 
+            if vs in ["vsTime","vsFill","vsRun"]: 
                 # make trigger cross sections plots vs time, showing the pileup_vs on the right axis
                 print("xsecLabel %s"%xsecLabel)
                 for trigger in xsec_vs:
                     xsec_vs[trigger].SetTitle(title_vsTime)
                     if vs == "vsFill":
                         xsec_vs[trigger].GetXaxis().SetTitle(fillLabel)
+                    elif vs == "vsRun":
+                        xsec_vs[trigger].GetXaxis().SetTitle(runLabel)
                     elif vs == "vsTime":
                         xsec_vs[trigger].GetXaxis().SetTitle(timeLabel)
                     if useRate:

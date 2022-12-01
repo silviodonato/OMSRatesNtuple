@@ -53,6 +53,7 @@ def getHisto(weight, chain, var, binning, selection, option="GOFF"):
     print ("Calling chain.Draw: with",("%s >> %s%s"%(var,hName,binning),"%s*(%s)"%(weight,selection),option))
     chain.Draw("%s >> %s"%(var,hName) + binning,"%s*(%s)"%(weight,selection),option)
     histo = ROOT.gROOT.Get(hName)
+    print ("%s %f"%(histo.GetName(),histo.Integral()))
     assert(type(histo)==ROOT.TH1F)
     return histo
 
@@ -155,9 +156,16 @@ def readOptions(args, triggers, selections):
     if args.rates: useRates.append(True)
     if args.xsect: useRates.append(False)
     if args.vsFill: vses.append("vsFill")
+    if args.vsRun: vses.append("vsRun")
     if args.vsPU: vses.append("vsPU")
     if args.vsIntLumi: vses.append("vsIntLumi")
     if args.vsTime: vses.append("vsTime")
+    if len(useRates) == 0:
+        print("adding --xsect flag (--xsect or --rates is required)")
+        useRates.append(False)
+    if len(vses) == 0:
+        print("adding --vsIntLumi flag (at least one --vs* is required)")
+        vses.append("vsIntLumi")
     runMin = int(args.runMin)
     runMax = int(args.runMax)
     removeOutliers = float(args.removeOutliers)
