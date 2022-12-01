@@ -148,13 +148,21 @@ for run in sorted(runs):
     if os.path.getsize(fName) > 1000 :
         chain.AddFile(fName)
 
+#chain = ROOT.TChain("tree")
+#chain.AddFile("/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root")
+
 ## Constants
 secInDay = 24.*60*60
 LS_seconds = 2**18 / 11245.5 
 LS_duration = LS_seconds/ secInDay #LS in days
 from datetime import datetime
-offset = -(int(datetime(2022,8,31).timestamp()) - int(datetime(2023,1,1).timestamp()))  #since Nov 1, 2022 instead of #since Jan 1, 2023
-offset = -(int(datetime(2022,10,31).timestamp()) - int(datetime(2023,1,1).timestamp()))  #since Nov 1, 2022 instead of #since Jan 1, 2023
+#offset = int(datetime(2023,1,1).timestamp()) - int(datetime(2022,8,31).timestamp())  #since Nov 1, 2022 instead of #since Jan 1, 2023
+try:
+    offset = int(datetime(2023,1,1).timestamp()) - int(datetime(2022,8,31).timestamp())  #since Nov 1, 2022 instead of #since Jan 1, 2023
+except:
+    offset = 10630800
+    print("Please use 'python3' instead of 'python',")
+    print("using offset %d. This should be equal to int(datetime(2023,1,1).timestamp()) - int(datetime(2022,8,31).timestamp()) in python3 [from datetime import datetime] ")
 offset += -4294967296 ## bug fix ntuple v2.0
 #offset =5270400 ## Nov1 (ie. 0. = Nov1)
 #offset =5356800 ## Oct31 (ie. 1. = Nov1)
