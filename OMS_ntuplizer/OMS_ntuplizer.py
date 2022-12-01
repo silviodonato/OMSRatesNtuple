@@ -389,7 +389,7 @@ for run in runs:
     
     for var in lhc_int+lhc_int_add:
         var = var.replace("_number","") ## lumisection_number -> lumisection
-        lumisections_vars[var] = SetVariable(tree,var,'i',1,1)
+        lumisections_vars[var] = SetVariable(tree,var,'I',1,1)
     
     for var in lhc_float+lhc_float_add:
         lumisections_vars[var] = SetVariable(tree,var,'f',1,1)
