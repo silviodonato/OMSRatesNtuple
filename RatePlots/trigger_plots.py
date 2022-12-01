@@ -10,11 +10,19 @@ import os
 chain = ROOT.TChain("tree")
 
 selectionDefault = {
-    "PU50_60": "golden_json && pileup>0 && pileup<60",
+    "PU50_60": "golden_json && pileup>50 && pileup<60",
     "inclusive": "golden_json",
 }
 
 triggerDefault = [
+    "HLT_HT200_L1SingleLLPJet_DisplacedDijet35_Inclusive1PtrkShortSig5_v3",
+    "HLT_L1Tau_DelayedJet40_DoubleDelay1p25nsInclusive_v1",
+    "HLT_HT430_DelayedJet40_SingleDelay1nsTrackless_v3",
+    "HLT_HT270_L1SingleLLPJet_DisplacedDijet40_DisplacedTrack_v3",
+    "HLT_Photon200_v16",
+    "HLT_Photon110EB_TightID_TightIso_v4",
+
+
     ## since  355678
     "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1_v",
     "HLT_IsoMu24_v",
@@ -166,10 +174,12 @@ firstRun = chain.run
 chain.Draw("fill")
 
 ## Skip missing triggers
-for trigger in triggers[:]:
-    if not hasattr(chain, trigger):
-        triggers.remove(trigger)
-        print("Trigger %s not found. Removed from the trigger list."%trigger)
+for entry in [0, chain.GetEntries()-1]: #check only the first and last event
+    chain.GetEvent(entry)
+    for trigger in triggers[:]:
+        if not hasattr(chain, trigger):
+            triggers.remove(trigger)
+            print("##### Trigger %s not found in run %d. Removed from the trigger list. #####"%(trigger,chain.run))
 
 ## Time varibale
 timeVar = "(time + %f)/%f "%(offset, secInDay)
