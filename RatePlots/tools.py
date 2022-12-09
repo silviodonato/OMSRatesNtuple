@@ -1,6 +1,7 @@
 import ROOT
 
-def getCrossSection(histo, recLumi,removeOutliers=0.95):
+def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
+    print("getCrossSection START")
     npointsMedian = 10000000
     average = 0
     count = 0
@@ -27,14 +28,14 @@ def getCrossSection(histo, recLumi,removeOutliers=0.95):
         val = float(histo[i]) 
         lum = float(recLumi[i])
         if lum>0 and val>=0:
-            nhisto.SetBinContent(i, val/lum)
-            nhisto.SetBinError(i, val**0.5/lum)
+            nhisto.SetBinContent(i, val/lum*scale)
+            nhisto.SetBinError(i, val**0.5/lum*scale)
             if removeOutliers>0:
                 if val/lum>maxAllowedValue: 
-                    nhisto.SetBinContent(i, maxAllowedValue)
+                    nhisto.SetBinContent(i, maxAllowedValue*scale)
                     nhisto.SetBinError(i, 0) ## to avoid huge errors from crazy rates
                 elif val/lum<minAllowedValue: 
-                    nhisto.SetBinContent(i, minAllowedValue)
+                    nhisto.SetBinContent(i, minAllowedValue*scale)
                     nhisto.SetBinError(i, 0) ## to avoid huge errors from crazy rates
         else:
             nhisto.SetBinContent(i, 0)
@@ -42,8 +43,9 @@ def getCrossSection(histo, recLumi,removeOutliers=0.95):
             if lum<0: print("getCrossSection: lum<0 in %s bin %d"%(recLumi.GetName(), i))
             if val<0: print("getCrossSection: val<0 in %s bin %d"%(histo.GetName(), i))
 #            print(i,val,lum)
-        nhisto.SetMaximum(maxAllowedValue*1.05)
-        nhisto.SetMinimum(minAllowedValue*0.5)
+        nhisto.SetMaximum(maxAllowedValue*1.05*scale)
+        nhisto.SetMinimum(minAllowedValue*0.5*scale)
+    print("getCrossSection STOP")
     return nhisto
 
 import copy
@@ -82,12 +84,15 @@ def setColor(plot, color):
     plot.SetMarkerColor(color)
 
 def setStyle(plot, color):
+#    print("setStyle START")
     setColor(plot, color)
     plot.SetLineWidth(2)
     plot.SetMarkerStyle(21)
     plot.SetMarkerSize(0.6)
+#    print("setStyle STOP")
 
 def createFit(histo, initVal,  function = "[0]"):
+#    print("createFit START")
     min_,max_ = histo.GetXaxis().GetXmin(), histo.GetXaxis().GetXmax()
     fit = ROOT.TF1(histo.GetName()+"_fit",function,min_,max(max_,100))
     setColor(fit, histo.GetLineColor())
@@ -95,6 +100,7 @@ def createFit(histo, initVal,  function = "[0]"):
     fit.SetLineStyle(4)
     fit.SetParameter(0, initVal)
     histo.Fit(fit,"WW","",min_,max_)
+#    print("createFit STOP")
     return fit
 
 def dropError(histo):
@@ -183,6 +189,7 @@ def readOptions(args, triggers, selections):
     refLumi = float(args.refLumi)
     lumisPerBin = int(args.lumisPerBin)
     nbins = int(args.nbins)
+    if nbins<0 and lumisPerBin<0: nbins=1000
     if nbins>0 and lumisPerBin>0: raise Exception("You have to use one and only one option between --lumisPerBin and --nbins.")
     if not inputFile and not inputFolder: 
         inputFile = "/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root"
