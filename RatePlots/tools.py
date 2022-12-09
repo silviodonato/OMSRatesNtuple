@@ -161,15 +161,16 @@ def readOptions(args, triggers, selections):
     if args.vsIntLumi: vses.append("vsIntLumi")
     if args.vsTime: vses.append("vsTime")
     if len(useRates) == 0:
-        print("adding --xsect flag (--xsect or --rates is required)")
+        print("adding default --xsect flag (--xsect or --rates is required)")
         useRates.append(False)
     if len(vses) == 0:
-        print("adding --vsIntLumi flag (at least one --vs* is required)")
+        print("adding default --vsIntLumi flag (at least one --vs* is required)")
         vses.append("vsIntLumi")
     runMin = int(args.runMin)
     runMax = int(args.runMax)
     removeOutliers = float(args.removeOutliers)
-    folder = args.input
+    inputFolder = args.input
+    inputFile = args.inputFile
     plotFolder = args.output
     if args.triggers: triggers = args.triggers.split(",")
     if args.selections:
@@ -183,6 +184,10 @@ def readOptions(args, triggers, selections):
     lumisPerBin = int(args.lumisPerBin)
     nbins = int(args.nbins)
     if nbins>0 and lumisPerBin>0: raise Exception("You have to use one and only one option between --lumisPerBin and --nbins.")
+    if not inputFile and not inputFolder: 
+        inputFile = "/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root"
+        print ("Using default inputFile = %s"%inputFile)
+    if inputFolder and inputFile:  raise Exception("You cannot --input and --inputFolder at the same time.")
     print(args)
-    return useRates, vses, triggers, folder, plotFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins
+    return useRates, vses, triggers, inputFolder, inputFile, plotFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins
 
