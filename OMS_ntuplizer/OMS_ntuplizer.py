@@ -14,13 +14,22 @@ run_max = 999000
 minimum_integratedLumi = 1. # require at least some pb-1 (?) per run 
 outputFolder = "."
 
+#missing last json
+#run_min = 362439 
+#run_max = 362761
+
+
+#2018
+#run_min = 314458 
+#run_max = 326004
+
 overwrite = False #overwrite output files
 requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
-badRuns = [360088, 357112,357104, 355872] #the code crashes on these runs
+badRuns = [360088, 357112,357104, 355872, 321775, 318734, 319908, 319698, 321712] #the code crashes on these runs
 
 #load json files from https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/
-muonJsonFile = "Cert_Collisions2022_355100_362439_Muon.json" 
-goldenJsonFile = "Cert_Collisions2022_355100_362439_Golden.json" 
+muonJsonFile = "Cert_Collisions2022_355100_362760_Muon.json" 
+goldenJsonFile = "Cert_Collisions2022_355100_362760_Golden.json" 
 
 ## Max limits in queries, used for testing
 minLS = 0
