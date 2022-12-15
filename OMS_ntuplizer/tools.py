@@ -32,7 +32,8 @@ def getOMSAPI(appSecret=""):
 
 def getAppSecret():
     if appSecret == "":
-        f = open(os.path.expanduser(appSecretLocation))
-        return f.read()[:-1]
-    else:
-        return appSecret
+        fName = os.path.expanduser(appSecretLocation)
+        if os.path.exists(fName):
+            f = open(fName)
+            return f.read()[:-1]
+    return appSecret ## return "" if appSecret is not found
