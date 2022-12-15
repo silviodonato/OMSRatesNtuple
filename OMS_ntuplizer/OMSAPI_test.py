@@ -1,8 +1,8 @@
-## Simple test, very similar to https://gitlab.cern.ch/cmsoms/oms-api-client/-/blob/master/examples/01-query.py
+## Other simple test available in https://gitlab.cern.ch/cmsoms/oms-api-client/-/blob/master/examples/01-query.py
 
-from omsapi import OMSAPI
-omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
-omsapi.auth_krb()
+from tools import getOMSAPI, getAppSecret
+
+omsapi = getOMSAPI(getAppSecret())
 
 query = omsapi.query("runs")
 query.set_verbose(False)

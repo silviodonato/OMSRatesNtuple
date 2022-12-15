@@ -45,10 +45,6 @@ import re
 import ROOT
 from array import array
 
-if not os.path.exists( os.getcwd() + 'omsapi.py' ):
-    sys.path.append('..')  # if you run the script in the more-examples sub-folder 
-from omsapi import OMSAPI
-
 parser = argparse.ArgumentParser( 
     description='python script using OMS API to get maximum rate of L1 trigger algos', 
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -67,6 +63,9 @@ job_i, job_tot = [int(v) for v in args.split.split("/")]
 omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
 #cern-get-sso-cookie -u https://cmsoms.cern.ch/cms/fills/summary -o ssocookies.txt
 omsapi.auth_krb()
+
+from tools import getOMSAPI, getAppSecret
+omsapi = getOMSAPI(getAppSecret())
 
 
 l1BitMap = {}
