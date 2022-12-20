@@ -86,12 +86,14 @@ def json( dic, run , lumi):
 
 ###############################################
 
-attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"]
-filters ={
-    "run_number":(run_min, run_max),
-    "recorded_lumi":(minimum_integratedLumi, None)  ## require at least minimum_integratedLumi [pb-1] of lumi per run
-}
-data = getOMSdata(omsapi, "runs", attributes, filters, max_pages)
+data = getOMSdata(omsapi, "runs", 
+    attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"], 
+    filters = {
+        "run_number":[run_min, run_max], 
+        "recorded_lumi":[minimum_integratedLumi, None] 
+    }, 
+    max_pages=max_pages
+)
 
 runs = []
 for d in reversed(data):
@@ -104,30 +106,6 @@ for d in reversed(data):
     else:
         runs.append(run)
 
-#get HLT prescale tables
-#query = omsapi.query("hltprescalesets")
-#query.filter("config_name", "/cdaq/physics/Run2022/2e34/v1.5.0/HLT/V13" )
-##query.filter("path_name", 'HLT_PFMETTypeOne140_PFMHT140_IDTight_v13' )
-#query.filter("prescale_sequence", "200" )
-##query.filter("prescale_index", "4" )
-#resp = query.data()
-#oms = resp.json()
-#data = oms['data']
-#for i in data: print(i,"\n")
-
-#    query = omsapi.query("datasetrates/datasets")
-
-#    ## Filter run
-#    query.filter("run_number", run )
-#    query.attr("datasets")
-
-#    # Execute query and fetch data
-#    resp = query.data()
-#    oms = resp.json()   # all the data returned by OMS
-#    data = oms['data']
-
-#    datasets = data['attributes']['datasets']
-
 print("Doing %d runs="%len(runs),runs)
 for run in runs:
     fName = outputFolder+"/"+str(run)+".root"
@@ -138,14 +116,18 @@ for run in runs:
     if run in badRuns:
         print("Contained in "+str(badRuns)+ "skipping.")
         continue
-    query = omsapi.query("lumisections")
-    query.set_verbose(False)
-    query.per_page = max_pages  # to get all names in one go
-    query.filter("run_number",  run)
-    resp = query.data()
-    oms = resp.json()   # all the data returned by OMS
-    data = oms['data']
-
+    
+    filters ={
+        "run_number":[run],
+    }
+    data = getOMSdata(omsapi, "lumisections", 
+        attributes = [], 
+        filters = {
+            "run_number": [run],
+        }, 
+        max_pages=max_pages
+    )
+    
     lumisections = {}
     det_flags = ['bpix', 'fpix', 'tob', 'tecp', 'tecm', 'tibtid', 'esm', 'ebp', 'esp', 'eep', 'ebm', 'eem', 'ho', 'hbhea', 'hbhec', 'hbheb', 'hf', 'gemm', 'gemp', 'gem', 'dt0', 'dtm', 'dtp', 'rpc', 'cscm', 'cscp', 'rp_sect_45', 'rp_sect_56', 'rp_time']
     lhc_flags = ['beams_stable','beam_present','beam2_stable','beam2_present','physics_flag']
@@ -201,20 +183,13 @@ for run in runs:
 
     ####################################################################
 
-    query = omsapi.query("hltpathinfo")
-    query.set_verbose(False)
-    query.per_page = max_pages  # to get all names in one go
-
-    # Projection. Specify attributes you want to fetch
-    query.attrs(["path_name"])
-
-    # Filter run
-    query.filter("run_number", run )
-
-    # Execute query and fetch data
-    resp = query.data()
-    oms = resp.json()   # all the data returned by OMS
-    data = oms['data']
+    data = getOMSdata(omsapi, "hltpathinfo", 
+        attributes = ["path_name"], 
+        filters = {
+            "run_number": [run],
+        }, 
+        max_pages=max_pages
+    )
     HLTPaths = []
     for row in data[:maxHLTPaths]:
         HLTPaths.append(row['attributes']['path_name'])
@@ -271,22 +246,17 @@ for run in runs:
     #print(HLT_Counters[HLT_path])
     #################################################################
 
-    query = omsapi.query("l1algorithmtriggers")
-    query.set_verbose(False)
-    query.per_page = max_pages  # to get all names in one go
+    data = getOMSdata(omsapi, "l1algorithmtriggers", 
+        attributes = ["name","bit"], 
+        filters = {
+            "first_lumisection_number": [minLS, None],
+            "last_lumisection_number": [None, maxLS],
+            "run_number" : [run],
+        }, 
+        max_pages=max_pages
+    )
 
-    # Projection. Specify attributes you want to fetch
-    query.attrs(["name","bit"])
-    query.filter("first_lumisection_number", minLS, "GE")
-    query.filter("last_lumisection_number", maxLS, "LE")
 
-    # Filter run
-    query.filter("run_number", run )
-
-    # Execute query and fetch data
-    resp = query.data()
-    oms = resp.json()   # all the data returned by OMS
-    data = oms['data']
     for row in data:
         algo = row['attributes']
         l1BitMap[int(algo['bit'])] = algo['name']
