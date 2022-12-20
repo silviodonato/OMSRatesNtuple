@@ -1,3 +1,6 @@
+max_pages = 10000
+verbose = False
+
 import os, sys
 if not os.path.exists( os.getcwd() + 'omsapi.py' ):
     sys.path.append('..')  # if you run the script in the more-examples sub-folder 
@@ -37,3 +40,39 @@ def getAppSecret():
             f = open(fName)
             return f.read()[:-1]
     return appSecret ## return "" if appSecret is not found
+    
+
+from array import array
+### Define tree variables, option https://root.cern.ch/doc/master/classTTree.html 
+def SetVariable(tree,name,option='F',lenght=1,maxLenght=100):
+    if option == 'F': arraytype='f'
+    elif option == 'f': arraytype='f'
+    elif option == 'O': arraytype='i'
+    elif option == 'I': arraytype='l'
+    elif option == 'i': arraytype='l'
+    else:
+        print('option ',option,' not recognized.')
+        return
+
+    if not type(lenght) == str:
+        maxLenght = lenght
+        lenght = str(lenght)
+    variable = array(arraytype,[0]*maxLenght)
+    if maxLenght>1: name = name + '['+lenght+']'
+    tree.Branch(name,variable,name+'/'+option)
+    return variable
+
+
+
+def getOMSdata(omsapi,table, attributes, filters, max_pages=max_pages, verbose=verbose):
+    query = omsapi.query(table)
+    query.set_verbose(verbose)
+    query.per_page = max_pages  # to get all names in one go
+    query.attrs(attributes)
+    for var in filters:
+        if len(filters[var])==2:
+            if  filters[var][0]!=None: query.filter(var, filters[var][0], "GE")
+            if  filters[var][1]!=None: query.filter(var, filters[var][1], "LE")
+    resp = query.data()
+    oms = resp.json()   # all the data returned by OMS
+    return oms['data']

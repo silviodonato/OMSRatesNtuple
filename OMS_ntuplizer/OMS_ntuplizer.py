@@ -18,6 +18,8 @@ outputFolder = "."
 #run_min = 362439 
 #run_max = 362761
 
+#run_min = 362758 
+#run_max = 362760
 
 #2018
 #run_min = 314458 
@@ -59,12 +61,7 @@ parser.add_argument( '--split', default="-1/-1", help = 'split runs for simultan
 args = parser.parse_args()
 job_i, job_tot = [int(v) for v in args.split.split("/")]
 
-#omsapi = OMSAPI('http://cmsoms.cms/agg/api/','v1', cert_verify=False)
-omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
-#cern-get-sso-cookie -u https://cmsoms.cern.ch/cms/fills/summary -o ssocookies.txt
-omsapi.auth_krb()
-
-from tools import getOMSAPI, getAppSecret
+from tools import getOMSAPI, getAppSecret, SetVariable, getOMSdata
 omsapi = getOMSAPI(getAppSecret())
 
 
@@ -72,26 +69,6 @@ l1BitMap = {}
 l1Bits = []
 
 L1Counts_var = {}
-
-### Define tree variables, option https://root.cern.ch/doc/master/classTTree.html 
-def SetVariable(tree,name,option='F',lenght=1,maxLenght=100):
-    if option == 'F': arraytype='f'
-    elif option == 'f': arraytype='f'
-    elif option == 'O': arraytype='i'
-    elif option == 'I': arraytype='l'
-    elif option == 'i': arraytype='l'
-    else:
-        print('option ',option,' not recognized.')
-        return
-
-    if not type(lenght) == str:
-        maxLenght = lenght
-        lenght = str(lenght)
-    variable = array(arraytype,[0]*maxLenght)
-    if maxLenght>1: name = name + '['+lenght+']'
-    tree.Branch(name,variable,name+'/'+option)
-    return variable
-
 run_recLumi = 0.
 
 import json
@@ -109,17 +86,12 @@ def json( dic, run , lumi):
 
 ###############################################
 
-query = omsapi.query("runs")
-query.set_verbose(False)
-query.per_page = max_pages  # to get all names in one go
-query.attrs(["run_number","recorded_lumi","components","hlt_key","l1_key"]) #
-query.filter("run_number", run_min, "GE")
-query.filter("run_number", run_max, "LE")
-query.filter("recorded_lumi", minimum_integratedLumi, "GE") ## require at least minimum_integratedLumi [pb-1] of lumi per run
-
-resp = query.data()
-oms = resp.json()   # all the data returned by OMS
-data = oms['data']
+attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"]
+filters ={
+    "run_number":(run_min, run_max),
+    "recorded_lumi":(minimum_integratedLumi, None)  ## require at least minimum_integratedLumi [pb-1] of lumi per run
+}
+data = getOMSdata(omsapi, "runs", attributes, filters, max_pages)
 
 runs = []
 for d in reversed(data):
