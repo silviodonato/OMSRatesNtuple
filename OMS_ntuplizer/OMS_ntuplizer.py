@@ -61,7 +61,7 @@ parser.add_argument( '--split', default="-1/-1", help = 'split runs for simultan
 args = parser.parse_args()
 job_i, job_tot = [int(v) for v in args.split.split("/")]
 
-from tools import getOMSAPI, getAppSecret, SetVariable, getOMSdata
+from tools import getOMSAPI, getAppSecret, SetVariable, getOMSdata, stripVersion
 omsapi = getOMSAPI(getAppSecret())
 
 
@@ -194,11 +194,6 @@ for run in runs:
     for row in data[:maxHLTPaths]:
         HLTPaths.append(row['attributes']['path_name'])
 
-    def stripVersion(name):
-        if "_v" in name:
-            return name.split("_v")[0]+"_v"
-        return name
-
     HLTpaths_noVersion = [stripVersion(path) for path in HLTPaths]
     if not requiredHLTpath in HLTpaths_noVersion:
         print()
@@ -264,25 +259,6 @@ for run in runs:
     query = omsapi.query("l1algorithmtriggers")
     query.set_verbose(False)
     query.per_page = max_pages  # to get all names in one go
-
-#    # Projection. Specify attributes you want to fetch
-#    query.attrs(["pre_dt_before_prescale_counter"]) #"name","bit", see https://cmsoms.cern.ch/agg/api/v1/l1algorithmtriggers/362616__1__1
-
-#    #print(l1Bits)
-#    lumis = range(0,2)
-#    #bit = l1Bits[0]
-#    query.filter("run_number", run )
-##    query.filter("first_lumisection_number", minLS, operator="GE")
-##    query.filter("last_lumisection_number", maxLS, operator="LE")
-
-#    #query.filter("bit", bit)  # returns data per lumisection
-#    #query.custom("group[granularity]", "lumisection")
-#    data = query.data().json()['data']
-#    query.verbose = False
-#    max = 0.0
-#    lumisection = 4
-
-#    #362616__383__25
 
     ###############
     query = omsapi.query("l1algorithmtriggers")

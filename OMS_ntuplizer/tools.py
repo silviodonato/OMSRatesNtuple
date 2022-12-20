@@ -62,6 +62,10 @@ def SetVariable(tree,name,option='F',lenght=1,maxLenght=100):
     tree.Branch(name,variable,name+'/'+option)
     return variable
 
+def stripVersion(name):
+    if "_v" in name:
+        return name.split("_v")[0]+"_v"
+    return name
 
 
 def getOMSdata(omsapi,table, attributes, filters, max_pages=max_pages, verbose=verbose):
