@@ -1,7 +1,8 @@
 ## Rateplots
-This script produce trigger rate plots from the OMS ntuples, which are currently stored in `/eos/user/s/sdonato/public/OMS_rates/v1.0/` (accessible outside cern using `root://eos.cern.ch//eos/user/...`). The OMS ntuples were produced by https://github.com/silviodonato/OMSRatesNtuple/tree/main/OMS_ntuplizer. 
+This script produce trigger rate plots from the OMS ntuples, which are currently stored in `/eos/user/s/sdonato/public/OMS_rates/v2.0/` (accessible outside cern using `root://eos.cern.ch//eos/user/...`). The OMS ntuples were produced by https://github.com/silviodonato/OMSRatesNtuple/tree/main/OMS_ntuplizer. 
 
-As the size of the OMS nuples in `/eos/user/s/sdonato/public/OMS_rates/v1.0/` is less than 1 GB, it is convenient to copy them locally.
+As the size of the OMS nuples in `/eos/user/s/sdonato/public/OMS_rates/v2.0/` is less than 1 GB, it is convenient to copy them locally.
+The folder contains also some merged ntuples (eg. goldejson_skim.root) which speed up the code.
 
 
 ### Install RatePlots
