@@ -8,7 +8,7 @@ from omsapi import OMSAPI
 
 appName = "cms-tsg-oms-ntuple"
 appSecret = "" #keep empty to load secret from appSecretLocation
-appSecretLocation = "~/private/oms.sct" #echo "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" > ~/private/oms.sct
+appSecretLocation = "/afs/cern.ch/user/s/sdonato/private/oms.sct" #echo "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" > ~/private/oms.sct
 
 def getOMSAPI_krb():
     print("Calling  getOMSAPI_krb()")

@@ -7,12 +7,13 @@ and from https://gitlab.cern.ch/cms-tsg-fog/ratemon/-/tree/master/ .
 The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 """
 
-run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
+#run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
+run_min = 363360 # MWGR#1 2023
 run_max = 999000
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
-minimum_integratedLumi = 1. # require at least some pb-1 (?) per run 
-outputFolder = "."
+minimum_integratedLumi = -1. # require at least some pb-1 (?) per run 
+outputFolder = "2023"
 
 #missing last json
 #run_min = 362439 
@@ -26,7 +27,8 @@ outputFolder = "."
 #run_max = 326004
 
 overwrite = False #overwrite output files
-requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
+#requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
+requiredHLTpath = "HLT_EcalCalibration_v" #require this trigger to be in the menu (ie. require a collision menu)
 badRuns = [360088, 357112,357104, 355872, 321775, 318734, 319908, 319698, 321712] #the code crashes on these runs
 
 #load json files from https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/
