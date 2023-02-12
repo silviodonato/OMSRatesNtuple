@@ -25,7 +25,7 @@ outputFolder = "2023"
 #2018
 #run_min = 314458 
 #run_max = 326004
-
+verbose = True
 overwrite = False #overwrite output files
 #requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
 requiredHLTpath = "HLT_EcalCalibration_v" #require this trigger to be in the menu (ie. require a collision menu)
@@ -206,7 +206,7 @@ for run in runs:
 
     ###############
     query = omsapi.query("hltpathrates")
-    query.set_verbose(False)
+    query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
 
     # Projection. Specify attributes you want to fetch
@@ -259,12 +259,12 @@ for run in runs:
         l1BitMap[int(algo['bit'])] = algo['name']
     # Create a query.
     query = omsapi.query("l1algorithmtriggers")
-    query.set_verbose(False)
+    query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
 
     ###############
     query = omsapi.query("l1algorithmtriggers")
-    query.set_verbose(False)
+    query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
 
     # Projection. Specify attributes you want to fetch
