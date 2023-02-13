@@ -13,6 +13,7 @@ run_max = 999000
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
 minimum_integratedLumi = -1. # require at least some pb-1 (?) per run 
+minimum_hltevents = -10E3 # require a minimum of events passing HLT
 outputFolder = "2023"
 
 #missing last json
@@ -92,7 +93,8 @@ data = getOMSdata(omsapi, "runs",
     attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"], 
     filters = {
         "run_number":[run_min, run_max], 
-        "recorded_lumi":[minimum_integratedLumi, None] 
+        "recorded_lumi":[minimum_integratedLumi, None], 
+        "hlt_physics_counter":[minimum_hltevents, None],
     }, 
     max_pages=max_pages
 )
