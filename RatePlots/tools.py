@@ -2,12 +2,15 @@ import ROOT
 
 def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
     print("getCrossSection START")
+    print(histo, recLumi, scale, removeOutliers)
     npointsMedian = 10000000
     average = 0
     count = 0
     nhisto = histo.Clone(histo.GetName()+recLumi.GetName())
     if histo.Integral() == 0: raise Exception("getCrossSection: %s is empty"%histo.GetName())
     if recLumi.Integral() == 0: raise Exception("getCrossSection: %s is empty"%recLumi.GetName())
+    maxAllowedValue = histo.GetMaximum()
+    minAllowedValue = histo.GetMinimum()
     if removeOutliers>0: ##compute the quantile of histo/recLumi using only npointsMedian points
         y1 = histo.GetArray()
         y2 = recLumi.GetArray()
@@ -20,9 +23,10 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
                 ys.append(y1[i]/y2[i])
         maxAllowedIdx = min(int(len(ys) * (1.0-removeOutliers))-1, len(ys)-2)
         minAllowedIdx = max(int(len(ys) * (removeOutliers))+1, 0)
-        maxAllowedValue = sorted(ys)[maxAllowedIdx]
-        minAllowedValue = sorted(ys)[minAllowedIdx]
-#        print ( [sorted(ys)[i] for i in range(len(ys))])
+        if len(ys)>1:
+            maxAllowedValue = sorted(ys)[maxAllowedIdx]
+            minAllowedValue = sorted(ys)[minAllowedIdx]
+#        print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
         print("getCrossSection",histo.GetName(),recLumi.GetName(),minAllowedValue, maxAllowedValue, removeOutliers, len(ys), maxAllowedIdx, minAllowedIdx,  histo.Integral(), recLumi.Integral(), jump)
     for i in range(len(histo)):
         val = float(histo[i]) 
@@ -45,13 +49,13 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
 #            print(i,val,lum)
         nhisto.SetMaximum(maxAllowedValue*1.05*scale)
         nhisto.SetMinimum(minAllowedValue*0.5*scale)
-    print("getCrossSection STOP")
+    print("getCrossSection STOP", nhisto.GetMaximum(), nhisto.GetMinimum())
     return nhisto
 
 import copy
 def getHisto(weight, chain, var, binning, selection, option="GOFF"):
     hName = "hist_"+weight+selection
-    hName = ''.join([l for l in hName if l.isalpha()])
+    hName = ''.join([l for l in hName if (l.isalpha() or l.isnumeric()) ])
     print ("Calling chain.Draw: with",("%s >> %s%s"%(var,hName,binning),"%s*(%s)"%(weight,selection),option))
     chain.Draw("%s >> %s"%(var,hName) + binning,"%s*(%s)"%(weight,selection),option)
     histo = ROOT.gROOT.Get(hName)
@@ -184,6 +188,7 @@ def readOptions(args, triggers, selections):
         for s in args.selections.split(","):
             (direct, sel) = s.split("=")
             selections[direct] = sel
+    collisions = not args.cosmics
     batch = not args.nobatch
     testing = args.testing
     refLumi = float(args.refLumi)
@@ -196,5 +201,5 @@ def readOptions(args, triggers, selections):
         print ("Using default inputFile = %s"%inputFile)
     if inputFolder and inputFile:  raise Exception("You cannot --input and --inputFolder at the same time.")
     print(args)
-    return useRates, vses, triggers, inputFolder, inputFile, plotFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins
+    return useRates, vses, triggers, inputFolder, inputFile, plotFolder, removeOutliers, runMin, runMax, collisions, batch, testing, lumisPerBin, refLumi, selections, nbins
 

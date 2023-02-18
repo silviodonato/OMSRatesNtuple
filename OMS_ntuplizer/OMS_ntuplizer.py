@@ -7,24 +7,29 @@ and from https://gitlab.cern.ch/cms-tsg-fog/ratemon/-/tree/master/ .
 The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 """
 
-run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
+#run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
+run_min = 363360 # MWGR#1 2023
 run_max = 999000
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
-minimum_integratedLumi = 1. # require at least some pb-1 (?) per run 
-outputFolder = "."
+minimum_integratedLumi = -1. # require at least some pb-1 (?) per run 
+minimum_hltevents = -10E3 # require a minimum of events passing HLT
+outputFolder = "2023"
 
 #missing last json
 #run_min = 362439 
 #run_max = 362761
 
+#run_min = 362758 
+#run_max = 362760
 
 #2018
 #run_min = 314458 
 #run_max = 326004
-
+from tools import verbose
 overwrite = False #overwrite output files
-requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
+#requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
+requiredHLTpath = "HLT_EcalCalibration_v" #require this trigger to be in the menu (ie. require a collision menu)
 badRuns = [360088, 357112,357104, 355872, 321775, 318734, 319908, 319698, 321712] #the code crashes on these runs
 
 #load json files from https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/
@@ -45,10 +50,6 @@ import re
 import ROOT
 from array import array
 
-if not os.path.exists( os.getcwd() + 'omsapi.py' ):
-    sys.path.append('..')  # if you run the script in the more-examples sub-folder 
-from omsapi import OMSAPI
-
 parser = argparse.ArgumentParser( 
     description='python script using OMS API to get maximum rate of L1 trigger algos', 
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -63,36 +64,14 @@ parser.add_argument( '--split', default="-1/-1", help = 'split runs for simultan
 args = parser.parse_args()
 job_i, job_tot = [int(v) for v in args.split.split("/")]
 
-#omsapi = OMSAPI('http://cmsoms.cms/agg/api/','v1', cert_verify=False)
-omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
-#cern-get-sso-cookie -u https://cmsoms.cern.ch/cms/fills/summary -o ssocookies.txt
-omsapi.auth_krb()
+from tools import getOMSAPI, getAppSecret, SetVariable, getOMSdata, stripVersion
+omsapi = getOMSAPI(getAppSecret())
 
 
 l1BitMap = {}
 l1Bits = []
 
 L1Counts_var = {}
-
-### Define tree variables, option https://root.cern.ch/doc/master/classTTree.html 
-def SetVariable(tree,name,option='F',lenght=1,maxLenght=100):
-    if option == 'F': arraytype='f'
-    elif option == 'f': arraytype='f'
-    elif option == 'O': arraytype='i'
-    elif option == 'I': arraytype='l'
-    elif option == 'i': arraytype='l'
-    else:
-        print('option ',option,' not recognized.')
-        return
-
-    if not type(lenght) == str:
-        maxLenght = lenght
-        lenght = str(lenght)
-    variable = array(arraytype,[0]*maxLenght)
-    if maxLenght>1: name = name + '['+lenght+']'
-    tree.Branch(name,variable,name+'/'+option)
-    return variable
-
 run_recLumi = 0.
 
 import json
@@ -110,17 +89,15 @@ def json( dic, run , lumi):
 
 ###############################################
 
-query = omsapi.query("runs")
-query.set_verbose(False)
-query.per_page = max_pages  # to get all names in one go
-query.attrs(["run_number","recorded_lumi","components","hlt_key","l1_key"]) #
-query.filter("run_number", run_min, "GE")
-query.filter("run_number", run_max, "LE")
-query.filter("recorded_lumi", minimum_integratedLumi, "GE") ## require at least minimum_integratedLumi [pb-1] of lumi per run
-
-resp = query.data()
-oms = resp.json()   # all the data returned by OMS
-data = oms['data']
+data = getOMSdata(omsapi, "runs", 
+    attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"], 
+    filters = {
+        "run_number":[run_min, run_max], 
+        "recorded_lumi":[minimum_integratedLumi, None], 
+        "hlt_physics_counter":[minimum_hltevents, None],
+    }, 
+    max_pages=max_pages
+)
 
 runs = []
 for d in reversed(data):
@@ -133,30 +110,6 @@ for d in reversed(data):
     else:
         runs.append(run)
 
-#get HLT prescale tables
-#query = omsapi.query("hltprescalesets")
-#query.filter("config_name", "/cdaq/physics/Run2022/2e34/v1.5.0/HLT/V13" )
-##query.filter("path_name", 'HLT_PFMETTypeOne140_PFMHT140_IDTight_v13' )
-#query.filter("prescale_sequence", "200" )
-##query.filter("prescale_index", "4" )
-#resp = query.data()
-#oms = resp.json()
-#data = oms['data']
-#for i in data: print(i,"\n")
-
-#    query = omsapi.query("datasetrates/datasets")
-
-#    ## Filter run
-#    query.filter("run_number", run )
-#    query.attr("datasets")
-
-#    # Execute query and fetch data
-#    resp = query.data()
-#    oms = resp.json()   # all the data returned by OMS
-#    data = oms['data']
-
-#    datasets = data['attributes']['datasets']
-
 print("Doing %d runs="%len(runs),runs)
 for run in runs:
     fName = outputFolder+"/"+str(run)+".root"
@@ -167,14 +120,18 @@ for run in runs:
     if run in badRuns:
         print("Contained in "+str(badRuns)+ "skipping.")
         continue
-    query = omsapi.query("lumisections")
-    query.set_verbose(False)
-    query.per_page = max_pages  # to get all names in one go
-    query.filter("run_number",  run)
-    resp = query.data()
-    oms = resp.json()   # all the data returned by OMS
-    data = oms['data']
-
+    
+    filters ={
+        "run_number":[run],
+    }
+    data = getOMSdata(omsapi, "lumisections", 
+        attributes = [], 
+        filters = {
+            "run_number": [run],
+        }, 
+        max_pages=max_pages
+    )
+    
     lumisections = {}
     det_flags = ['bpix', 'fpix', 'tob', 'tecp', 'tecm', 'tibtid', 'esm', 'ebp', 'esp', 'eep', 'ebm', 'eem', 'ho', 'hbhea', 'hbhec', 'hbheb', 'hf', 'gemm', 'gemp', 'gem', 'dt0', 'dtm', 'dtp', 'rpc', 'cscm', 'cscp', 'rp_sect_45', 'rp_sect_56', 'rp_time']
     lhc_flags = ['beams_stable','beam_present','beam2_stable','beam2_present','physics_flag']
@@ -230,28 +187,16 @@ for run in runs:
 
     ####################################################################
 
-    query = omsapi.query("hltpathinfo")
-    query.set_verbose(False)
-    query.per_page = max_pages  # to get all names in one go
-
-    # Projection. Specify attributes you want to fetch
-    query.attrs(["path_name"])
-
-    # Filter run
-    query.filter("run_number", run )
-
-    # Execute query and fetch data
-    resp = query.data()
-    oms = resp.json()   # all the data returned by OMS
-    data = oms['data']
+    data = getOMSdata(omsapi, "hltpathinfo", 
+        attributes = ["path_name"], 
+        filters = {
+            "run_number": [run],
+        }, 
+        max_pages=max_pages
+    )
     HLTPaths = []
     for row in data[:maxHLTPaths]:
         HLTPaths.append(row['attributes']['path_name'])
-
-    def stripVersion(name):
-        if "_v" in name:
-            return name.split("_v")[0]+"_v"
-        return name
 
     HLTpaths_noVersion = [stripVersion(path) for path in HLTPaths]
     if not requiredHLTpath in HLTpaths_noVersion:
@@ -263,7 +208,7 @@ for run in runs:
 
     ###############
     query = omsapi.query("hltpathrates")
-    query.set_verbose(False)
+    query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
 
     # Projection. Specify attributes you want to fetch
@@ -300,52 +245,28 @@ for run in runs:
     #print(HLT_Counters[HLT_path])
     #################################################################
 
-    query = omsapi.query("l1algorithmtriggers")
-    query.set_verbose(False)
-    query.per_page = max_pages  # to get all names in one go
+    data = getOMSdata(omsapi, "l1algorithmtriggers", 
+        attributes = ["name","bit"], 
+        filters = {
+            "first_lumisection_number": [minLS, None],
+            "last_lumisection_number": [None, maxLS],
+            "run_number" : [run],
+        }, 
+        max_pages=max_pages
+    )
 
-    # Projection. Specify attributes you want to fetch
-    query.attrs(["name","bit"])
-    query.filter("first_lumisection_number", minLS, "GE")
-    query.filter("last_lumisection_number", maxLS, "LE")
 
-    # Filter run
-    query.filter("run_number", run )
-
-    # Execute query and fetch data
-    resp = query.data()
-    oms = resp.json()   # all the data returned by OMS
-    data = oms['data']
     for row in data:
         algo = row['attributes']
         l1BitMap[int(algo['bit'])] = algo['name']
     # Create a query.
     query = omsapi.query("l1algorithmtriggers")
-    query.set_verbose(False)
+    query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
-
-#    # Projection. Specify attributes you want to fetch
-#    query.attrs(["pre_dt_before_prescale_counter"]) #"name","bit", see https://cmsoms.cern.ch/agg/api/v1/l1algorithmtriggers/362616__1__1
-
-#    #print(l1Bits)
-#    lumis = range(0,2)
-#    #bit = l1Bits[0]
-#    query.filter("run_number", run )
-##    query.filter("first_lumisection_number", minLS, operator="GE")
-##    query.filter("last_lumisection_number", maxLS, operator="LE")
-
-#    #query.filter("bit", bit)  # returns data per lumisection
-#    #query.custom("group[granularity]", "lumisection")
-#    data = query.data().json()['data']
-#    query.verbose = False
-#    max = 0.0
-#    lumisection = 4
-
-#    #362616__383__25
 
     ###############
     query = omsapi.query("l1algorithmtriggers")
-    query.set_verbose(False)
+    query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
 
     # Projection. Specify attributes you want to fetch

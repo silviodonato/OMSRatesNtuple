@@ -1,11 +1,11 @@
-## Simple test, very similar to https://gitlab.cern.ch/cmsoms/oms-api-client/-/blob/master/examples/01-query.py
+## Other simple test available in https://gitlab.cern.ch/cmsoms/oms-api-client/-/blob/master/examples/01-query.py
 
-from omsapi import OMSAPI
-omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
-omsapi.auth_krb()
+from tools import getOMSAPI, getAppSecret
+
+omsapi = getOMSAPI(getAppSecret())
 
 query = omsapi.query("runs")
-query.set_verbose(False)
+query.set_verbose(True)
 query.per_page = 1000  # to get all names in one go
 query.attrs(["run_number","recorded_lumi"]) #
 query.filter("run_number", 362691, "GE")
