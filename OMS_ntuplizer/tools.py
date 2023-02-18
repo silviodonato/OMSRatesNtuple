@@ -1,6 +1,5 @@
 max_pages = 10000
 verbose = False
-
 import os, sys
 if not os.path.exists( os.getcwd() + 'omsapi.py' ):
     sys.path.append('..')  # if you run the script in the more-examples sub-folder 
