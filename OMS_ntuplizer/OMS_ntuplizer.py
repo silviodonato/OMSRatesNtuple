@@ -95,6 +95,7 @@ data = getOMSdata(omsapi, "runs",
         "run_number":[run_min, run_max], 
         "recorded_lumi":[minimum_integratedLumi, None], 
         "hlt_physics_counter":[minimum_hltevents, None],
+        "end_time":["2000-01-01T00:00:00Z", "3000-01-01T00:00:00Z"], ## exclude ongoing runs (end_time=None)
     }, 
     max_pages=max_pages
 )
