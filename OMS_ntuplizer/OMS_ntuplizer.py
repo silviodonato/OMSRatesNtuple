@@ -26,7 +26,7 @@ outputFolder = "2023"
 #2018
 #run_min = 314458 
 #run_max = 326004
-verbose = True
+from tools import verbose
 overwrite = False #overwrite output files
 #requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
 requiredHLTpath = "HLT_EcalCalibration_v" #require this trigger to be in the menu (ie. require a collision menu)
