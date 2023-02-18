@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 import ROOT
 import tdrstyle #https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines
 
@@ -68,10 +67,14 @@ python3 trigger_plots.py \
 --inputFile /afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root \
 --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v \
 --selections "PU50_60=cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable"
+
+Example cosmics:
+python3 trigger_plots.py --rates  --vsRun --vsFill --vsTime --lumisPerBin 30 --input /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2023/ --triggers HLT_L1SingleMuOpen_v --selections "cosmics=1" --cosmics
 ''', 
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
+parser.add_argument('--cosmics', action='store_const', const=True, default=False, help='Run cosmics rates (no pileup, no lumi)')
 parser.add_argument('--rates', action='store_const', const=True, default=False, help='Make rates plots')
 parser.add_argument('--xsect', action='store_const', const=True, default=False, help='Make cross sections plots. Selected by default if no --rates nor --rates are defined')
 parser.add_argument('--vsFill', action='store_const', const=True, default=False, help='Make plots vs fill number')
@@ -96,7 +99,7 @@ parser.add_argument('--testing', action='store_const', const=True, default=False
 args = parser.parse_args()
 
 from tools import readOptions
-useRates, vses, triggers, inputFolder, inputFile, plotsFolder, removeOutliers, runMin, runMax, batch, testing, lumisPerBin, refLumi, selections, nbins = readOptions(parser.parse_args(), triggerDefault, selectionDefault)
+useRates, vses, triggers, inputFolder, inputFile, plotsFolder, removeOutliers, runMin, runMax, collisions, batch, testing, lumisPerBin, refLumi, selections, nbins = readOptions(parser.parse_args(), triggerDefault, selectionDefault)
 
 print("##### Options #####")
 print ("trigger_plots.py will produce %d x %d x %d x %d = %d plots in %s using OMS ntuples from %s,"%(len(useRates),len(vses),len(triggers),len(selections),len(useRates)*len(vses)*len(triggers)*len(selections), plotsFolder, inputFolder if inputFolder else inputFile))
@@ -233,14 +236,16 @@ for selFolder in selections:
     from tools import getHisto
     fillNumber_vsTime = getHisto("fill", chain, timeVar, binning, selection)
     runNumber_vsTime = getHisto("run", chain, timeVar, binning, selection)
-    delLumi_vsTime = getHisto("delivered_lumi_per_lumisection", chain, timeVar, binning, "1") #1000 pb-1 = fb-1
-    delLumi_vsTime.Scale(1./1000)# pb-1 -> fb-1
-    intLumi_vsTime = delLumi_vsTime.GetCumulative()
-    intLumi_vsTime.SetName(intLumi_vsTime.GetName().replace("_",""))
+    if collisions:
+        delLumi_vsTime = getHisto("delivered_lumi_per_lumisection", chain, timeVar, binning, "1") #1000 pb-1 = fb-1
+        delLumi_vsTime.Scale(1./1000)# pb-1 -> fb-1
+        intLumi_vsTime = delLumi_vsTime.GetCumulative()
+        intLumi_vsTime.SetName(intLumi_vsTime.GetName().replace("_",""))
     count_vsTime = getHisto("1", chain, timeVar, binning, selection) ## count_vs number of entries per bin
-    pileup_vsTime = getHisto("pileup", chain, timeVar, binning, selection)
-    recLumi_vsTime = getHisto("recorded_lumi_per_lumisection", chain, timeVar, binning, selection) #pb-1 * 1E33 = 1 cm-2
-    recLumi_vsTime.Scale(1E36/refLumi)# pb-1 -> cm-2 -> rates at 2E34 cm-2s-1
+    if collisions:
+        pileup_vsTime = getHisto("pileup", chain, timeVar, binning, selection) ##co
+        recLumi_vsTime = getHisto("recorded_lumi_per_lumisection", chain, timeVar, binning, selection) #pb-1 * 1E33 = 1 cm-2
+        recLumi_vsTime.Scale(1E36/refLumi)# pb-1 -> cm-2 -> rates at 2E34 cm-2s-1
     print("get common histograms: DONE")
 
     ## take the average value per bin, instead of the sum, for non-cumulative variables
@@ -256,23 +261,26 @@ for selFolder in selections:
     ## compute the histograms binned per fillNumber instead of run number
     from tools import getHistoVsFillNumber
     count_vsFill = getHistoVsFillNumber(count_vsTime, fillNumber_vsTime)
-    recLumi_vsFill = getHistoVsFillNumber(recLumi_vsTime, fillNumber_vsTime)
-    intLumi_vsFill = getHistoVsFillNumber(intLumi_vsTime, fillNumber_vsTime)
+    if collisions:
+        recLumi_vsFill = getHistoVsFillNumber(recLumi_vsTime, fillNumber_vsTime)
+        intLumi_vsFill = getHistoVsFillNumber(intLumi_vsTime, fillNumber_vsTime)
     count_vsRun = getHistoVsFillNumber(count_vsTime, runNumber_vsTime)
-    recLumi_vsRun = getHistoVsFillNumber(recLumi_vsTime, runNumber_vsTime)
-    intLumi_vsRun = getHistoVsFillNumber(intLumi_vsTime, runNumber_vsTime)
+    if collisions:
+        recLumi_vsRun = getHistoVsFillNumber(recLumi_vsTime, runNumber_vsTime)
+        intLumi_vsRun = getHistoVsFillNumber(intLumi_vsTime, runNumber_vsTime)
 #    pileup_vsTime.Divide(count_vsTime) 
 #    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
 #    recLumi_vsFill.Draw()
     
-    pileup_vsRun = getHistoVsFillNumber(pileup_vsTime, runNumber_vsTime)
-    pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
-    pileup_vsTime.Divide(count_vsTime) 
-    pileup_vsFill.Divide(count_vsFill) 
-    pileup_vsRun.Divide(count_vsRun) 
-    dropError(pileup_vsTime)
-    dropError(pileup_vsFill)
-    dropError(pileup_vsRun)
+    if collisions:
+        pileup_vsRun = getHistoVsFillNumber(pileup_vsTime, runNumber_vsTime)
+        pileup_vsFill = getHistoVsFillNumber(pileup_vsTime, fillNumber_vsTime)
+        pileup_vsTime.Divide(count_vsTime) 
+        pileup_vsFill.Divide(count_vsFill) 
+        pileup_vsRun.Divide(count_vsRun) 
+        dropError(pileup_vsTime)
+        dropError(pileup_vsFill)
+        dropError(pileup_vsRun)
     
     # init canvas
     from style import res_X,res_Y, gridX, gridY
@@ -282,17 +290,18 @@ for selFolder in selections:
     canv.SetGridy(gridY)
     
     from style import title_vsLumi,intLumiLabel,timeLabel
-    intLumiLabel = intLumiLabel%firstFill ## replace %s with the actual first fill number 
-    # plot integrated lumi vs time
-    intLumi_vsTime.SetTitle("")
-    intLumi_vsTime.GetXaxis().SetTitle(timeLabel)
-    intLumi_vsTime.GetYaxis().SetTitle(intLumiLabel)
-    intLumi_vsTime.Draw("HIST")
-    canv.Update()
-    canv.Modify()
-    
-    canv.SaveAs(outFolder+"/AintLumi_vsTime.root")
-    canv.SaveAs(outFolder+"/AintLumi_vsTime.png")
+    if collisions:
+        intLumiLabel = intLumiLabel%firstFill ## replace %s with the actual first fill number 
+        # plot integrated lumi vs time
+        intLumi_vsTime.SetTitle("")
+        intLumi_vsTime.GetXaxis().SetTitle(timeLabel)
+        intLumi_vsTime.GetYaxis().SetTitle(intLumiLabel)
+        intLumi_vsTime.Draw("HIST")
+        canv.Update()
+        canv.Modify()
+        
+        canv.SaveAs(outFolder+"/AintLumi_vsTime.root")
+        canv.SaveAs(outFolder+"/AintLumi_vsTime.png")
     
     # plot the fill number vs integrated luminosity
     from style import fillLabel, fillNumberMargin, runLabel
@@ -306,24 +315,25 @@ for selFolder in selections:
             plotNumber_vsTime = runNumber_vsTime
             firstNumber = firstRun
         lastFill = plotNumber_vsTime.GetMaximum()
-        plotNumber_vsLumi = ROOT.TGraph(len(plotNumber_vsTime))
-        npoints=0
-        for i in range(len(plotNumber_vsTime)):
-            if plotNumber_vsTime[i]>0:
-                plotNumber_vsLumi.SetPoint(npoints,intLumi_vsTime[i],plotNumber_vsTime[i])
-                npoints+=1
-        plotNumber_vsLumi.SetMarkerSize(0.5)
-        plotNumber_vsLumi.SetMarkerStyle(21)
-        plotNumber_vsLumi.SetTitle("")
-        #plotNumber_vsLumi.GetXaxis().SetRangeUser(xsec_vsLum.keys()[0].GetXaxis().GetXmin(), pileup_vs.GetXaxis().GetXmax())
-        plotNumber_vsLumi.GetXaxis().SetTitle(intLumiLabel)
-        plotNumber_vsLumi.GetYaxis().SetTitle(xlabel)
-        plotNumber_vsLumi.SetMinimum(firstNumber-fillNumberMargin)
-        plotNumber_vsLumi.SetMaximum(plotNumber_vsTime.GetMaximum()+fillNumberMargin)
-        plotNumber_vsLumi.Draw("AP")
-        canv.SaveAs(outFolder+"/A%sNumber_vsLumi.root"%var)
-        canv.SaveAs(outFolder+"/A%sNumber_vsLumi.png"%var)
-        del plotNumber_vsLumi
+        if collisions:
+            plotNumber_vsLumi = ROOT.TGraph(len(plotNumber_vsTime))
+            npoints=0
+            for i in range(len(plotNumber_vsTime)):
+                if plotNumber_vsTime[i]>0:
+                    plotNumber_vsLumi.SetPoint(npoints,intLumi_vsTime[i],plotNumber_vsTime[i])
+                    npoints+=1
+            plotNumber_vsLumi.SetMarkerSize(0.5)
+            plotNumber_vsLumi.SetMarkerStyle(21)
+            plotNumber_vsLumi.SetTitle("")
+            #plotNumber_vsLumi.GetXaxis().SetRangeUser(xsec_vsLum.keys()[0].GetXaxis().GetXmin(), pileup_vs.GetXaxis().GetXmax())
+            plotNumber_vsLumi.GetXaxis().SetTitle(intLumiLabel)
+            plotNumber_vsLumi.GetYaxis().SetTitle(xlabel)
+            plotNumber_vsLumi.SetMinimum(firstNumber-fillNumberMargin)
+            plotNumber_vsLumi.SetMaximum(plotNumber_vsTime.GetMaximum()+fillNumberMargin)
+            plotNumber_vsLumi.Draw("AP")
+            canv.SaveAs(outFolder+"/A%sNumber_vsLumi.root"%var)
+            canv.SaveAs(outFolder+"/A%sNumber_vsLumi.png"%var)
+            del plotNumber_vsLumi
     del canv 
     
     ## re-init canvas
@@ -354,21 +364,24 @@ for selFolder in selections:
                 if vs in ["vsTime","vsPU","vsIntLumi"]:
                     histos_vs = histos_vsTime
                     count_vs = count_vsTime
-                    recLumi_vs = recLumi_vsTime
-                    intLumi_vs = intLumi_vsTime
-                    pileup_vs = pileup_vsTime
+                    if collisions:
+                        recLumi_vs = recLumi_vsTime
+                        intLumi_vs = intLumi_vsTime
+                        pileup_vs = pileup_vsTime
                 elif vs == "vsFill":
                     histos_vs = histos_vsFill
                     count_vs = count_vsFill
-                    recLumi_vs = recLumi_vsFill
-                    intLumi_vs = intLumi_vsFill
-                    pileup_vs = pileup_vsFill
+                    if collisions:
+                        recLumi_vs = recLumi_vsFill
+                        intLumi_vs = intLumi_vsFill
+                        pileup_vs = pileup_vsFill
                 elif vs == "vsRun":
                     histos_vs = histos_vsRun
                     count_vs = count_vsRun
-                    recLumi_vs = recLumi_vsRun
-                    intLumi_vs = intLumi_vsRun
-                    pileup_vs = pileup_vsRun
+                    if collisions:
+                        recLumi_vs = recLumi_vsRun
+                        intLumi_vs = intLumi_vsRun
+                        pileup_vs = pileup_vsRun
                 else:
                     raise Exception("Problem with vs = %s"%vs)
                 
@@ -392,19 +405,20 @@ for selFolder in selections:
                     histos_vs = histos_vsFill
                 elif vs == "vsRun":
                     histos_vs = histos_vsRun
-                if useRate:  ## get cross sections [events/recolumi]
+                if useRate: ## computes rates [events/time]
                     xsec_vs = getCrossSection(histos_vs,count_vs,1./LS_seconds, removeOutliers)
 #                    print("scaling")
 #                    xsec_vs.Scale(1./LS_seconds)
 #                    print("scaled")
-                else: ## computes rates [events/time]
+                elif collisions:  ## get cross sections [events/recolumi]
                     xsec_vs = getCrossSection(histos_vs,recLumi_vs,1, removeOutliers)
                 if not useRate:
                     fit = createFit(xsec_vs, xsec_vs.Integral()/count_vs.Integral())
 #                print("B")
                 
-                puScaleMax = 1.1*pileup_vs.GetMaximum()
-                setStyle(pileup_vs, puColor)
+                if collisions:
+                    puScaleMax = 1.1*pileup_vs.GetMaximum()
+                    setStyle(pileup_vs, puColor)
                 print("Making plots for %s %s %s"%(prefix, vs, trigger))
                 if vs in ["vsTime","vsFill","vsRun"]: 
                     # make trigger cross sections plots vs time, showing the pileup_vs on the right axis
@@ -423,15 +437,17 @@ for selFolder in selections:
                     xsec_vs.GetYaxis().SetRangeUser(xsec_vs.GetMinimum()*0.9,xsec_vs.GetMaximum()*1.1)
                     xsec_vs.Draw("e1")
             #        puScaleMin = xsec_vs.GetMinimum()/xsec_vs.GetMaximum()*puScaleMax
-                    pileup_vs_scaled, rightaxis = addPileUp(canv, pileup_vs, puScaleMax, pileupLabel)
-                    pileup_vs_scaled.Draw("P, same")
-                    rightaxis.Draw("") 
+                    if collisions:
+                        pileup_vs_scaled, rightaxis = addPileUp(canv, pileup_vs, puScaleMax, pileupLabel)
+                        pileup_vs_scaled.Draw("P, same")
+                        rightaxis.Draw("") 
                     xsec_vs.Draw("e1,same") ##keep pileup_vs in backgroup
                     if not useRate:
                         fit.SetRange(xsec_vs.GetXaxis().GetXmin(),xsec_vs.GetXaxis().GetXmax())
                         fit.Draw("same")
                     leg = createLegend()
-                    leg.AddEntry(pileup_vs_scaled,"pileup","p")
+                    if collisions:
+                        leg.AddEntry(pileup_vs_scaled,"pileup","p")
                     leg.AddEntry(xsec_vs,trigger,legStyle)
                     leg.Draw()
                     canv.SaveAs(outFolder+"/"+prefix+trigger+"_"+vs+".root")
@@ -440,9 +456,10 @@ for selFolder in selections:
                 
                 
                 # make trigger cross sections plots vs integrated lumi, showing the pileup_vs on the right axis
-                if vs == "vsIntLumi": 
+                if vs == "vsIntLumi" and collisions: 
                     xsec_vsLum = {}
-                    pileup_vsLum = getPlotVsNewVar(pileup_vs, intLumi_vs)
+                    if collisions:
+                        pileup_vsLum = getPlotVsNewVar(pileup_vs, intLumi_vs)
                     leg = createLegend()
                     xsec_vsLum = getPlotVsNewVar(xsec_vs, intLumi_vs) #convert xsec_vs in xsec_vsLum using intLumi_vs
                     setStyle(xsec_vsLum,xsec_vs.GetLineColor())
@@ -457,11 +474,13 @@ for selFolder in selections:
                     if not useRate:
                         fit.SetRange(xsec_vsLum.GetXaxis().GetXmin(),xsec_vsLum.GetXaxis().GetXmax())
                         fit.Draw("same")
-                    pileup_vs_scaled, rightaxis = addPileUp(canv, pileup_vsLum, puScaleMax, pileupLabel)
-                    pileup_vs_scaled.Draw("P, same")
+                    if collisions:
+                        pileup_vs_scaled, rightaxis = addPileUp(canv, pileup_vsLum, puScaleMax, pileupLabel)
+                        pileup_vs_scaled.Draw("P, same")
                     rightaxis.Draw("") 
                     xsec_vsLum.Draw("P") ##keep pileup_vs in backgroup
-                    leg.AddEntry(pileup_vs_scaled,"pileup","p")
+                    if collisions:
+                        leg.AddEntry(pileup_vs_scaled,"pileup","p")
                     leg.AddEntry(xsec_vs,trigger,legStyle) # or lep or f</verbatim>
                     leg.Draw()
                     canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsIntLumi.root")
@@ -469,7 +488,7 @@ for selFolder in selections:
                 
                 
                 # make trigger cross sections plots vs pileup_vs
-                if vs == "vsPU": 
+                if vs == "vsPU" and collisions: 
                     xsec_vsPU = {}
                     leg = createLegend()
                     xsec_vsPU = getPlotVsNewVar(xsec_vs, pileup_vs) #convert xsec_vs in xsec_vsPU using intLumi_vs
