@@ -8,6 +8,7 @@ The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 """
 
 #run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
+lastNdays = 7 ## look only at the runs of the last N days
 run_min = 363360 # MWGR#1 2023
 run_max = 999000
 #run_min = 362079 # RunG
@@ -88,14 +89,15 @@ def json( dic, run , lumi):
 
 
 ###############################################
-
+from datetime import datetime, timedelta
+day_start = datetime.today()-timedelta(days=lastNdays)
 data = getOMSdata(omsapi, "runs", 
     attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"], 
     filters = {
         "run_number":[run_min, run_max], 
         "recorded_lumi":[minimum_integratedLumi, None], 
         "hlt_physics_counter":[minimum_hltevents, None],
-        "end_time":["2000-01-01T00:00:00Z", "3000-01-01T00:00:00Z"], ## exclude ongoing runs (end_time=None)
+        "end_time":[day_start.isoformat(), "3000-01-01T00:00:00Z"], ## exclude ongoing runs (end_time=None)
     }, 
     max_pages=max_pages
 )
@@ -148,7 +150,6 @@ for run in runs:
         lumisections[var] = []
 
 
-    from datetime import datetime
     for row in data:
         for var in det_flags:
             lumisections[var].append(row['attributes'][var+"_ready"])
@@ -277,6 +278,10 @@ for run in runs:
 #    query.attrs(["pre_dt_before_prescale_counter","last_lumisection_number","first_lumisection_number","last_lumisection_number"]) #
     query.attrs(["pre_dt_before_prescale_counter","last_lumisection_number","first_lumisection_number"]) #
     for L1_bit in list(l1BitMap.keys())[:maxL1Bits]:
+        if type(L1_bit)!=int: 
+            print("Something wrong with %d. Skipping"%L1_bit)
+            print("l1BitMap[L1_bit] = %s"%l1BitMap[L1_bit])
+            continue
     #    print(L1_bit)
         L1_Counters[L1_bit] = []
         query.clear_filter()
