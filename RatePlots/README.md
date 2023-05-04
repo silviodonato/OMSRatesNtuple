@@ -21,16 +21,18 @@ python3 trigger_plots.py --help
 ```
 
 ```
-usage: trigger_plots.py [-h] [--rates] [--xsect] [--vsFill] [--vsRun] [--vsPU] [--vsIntLumi] [--vsTime] [--runMin RUNMIN] [--runMax RUNMAX] [--triggers TRIGGERS] [--selections SELECTIONS]
+usage: trigger_plots.py [-h] [--cosmics] [--rates] [--xsect] [--vsFill] [--vsRun] [--vsPU] [--vsIntLumi] [--vsTime] [--runMin RUNMIN] [--runMax RUNMAX] [--triggers TRIGGERS] [--selections SELECTIONS]
                         [--input INPUT] [--inputFile INPUTFILE] [--output OUTPUT] [--refLumi REFLUMI] [--lumisPerBin LUMISPERBIN] [--nbins NBINS] [--removeOutliers REMOVEOUTLIERS] [--nobatch]
                         [--testing]
 
 https://github.com/silviodonato/OMSRatesNtuple. Example: python3 trigger_plots.py --rates --xsect --vsFill --vsPU --vsIntLumi --vsTime --lumisPerBin 30 --inputFile
 /afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v --selections "PU50_60=cms_ready && beams_stable && beam2_stable
-&& pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable"
+&& pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable" Example cosmics: python3 trigger_plots.py --rates --vsRun --vsFill --vsTime --lumisPerBin 30 --input
+/afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2023/ --triggers HLT_L1SingleMuOpen_v --selections "cosmics=1" --cosmics
 
 options:
   -h, --help            show this help message and exit
+  --cosmics             Run cosmics rates (no pileup, no lumi) (default: False)
   --rates               Make rates plots (default: False)
   --xsect               Make cross sections plots. Selected by default if no --rates nor --rates are defined (default: False)
   --vsFill              Make plots vs fill number (default: False)
