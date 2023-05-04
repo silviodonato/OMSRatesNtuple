@@ -1,8 +1,8 @@
 ## Rateplots
-This script produce trigger rate plots from the OMS ntuples, which are currently stored in `/eos/user/s/sdonato/public/OMS_rates/v2.0/` (accessible outside cern using `root://eos.cern.ch//eos/user/...`). The OMS ntuples were produced by https://github.com/silviodonato/OMSRatesNtuple/tree/main/OMS_ntuplizer. 
+This script produce trigger rate plots from the OMS ntuples, which are currently stored in `/eos/cms/store/group/dpg_trigger/comm_trigger/TriggerStudiesGroup/OMSRatesNtuple/` (accessible outside cern using `root://eoscms.cern.ch//eos/cms/...` and at https://sdonato.web.cern.ch/sdonato/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer). The OMS ntuples were produced using https://github.com/silviodonato/OMSRatesNtuple/tree/main/OMS_ntuplizer. 
 
-As the size of the OMS nuples in `/eos/user/s/sdonato/public/OMS_rates/v2.0/` is less than 1 GB, it is convenient to copy them locally.
-The folder contains also some merged ntuples (eg. goldejson_skim.root) which speed up the code.
+As the size of the OMS nuples in `/eos/user/s/sdonato/public/OMS_rates/v2.0/` is less than 2 GB, it might be convenient to copy it locally.
+The folder contains also some merged ntuples (eg. goldejson_skim.root, physics_merged.root) which speed up the code.
 
 
 ### Install RatePlots
@@ -11,7 +11,7 @@ The folder contains also some merged ntuples (eg. goldejson_skim.root) which spe
 ### Run Rateplots
 - Check some parameters in `python3 trigger_plots.py --help`. You can find some example in doAll.sh.
 - Run `python3 trigger_plots.py` (example: `python3 trigger_plots.py --rates --xsect --vsFill --vsPU --vsIntLumi --vsTime --lumisPerBin 30 --inputFile
-/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v --selections "PU50_60=cms_ready && beams_stable && beam2_stable
+root://eoscms.cern.ch//eos/cms/store/group/dpg_trigger/comm_trigger/TriggerStudiesGroup/OMSRatesNtuple/2023/physics_merged.root --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v --selections "PU50_60=cms_ready && beams_stable && beam2_stable
 && pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable"`)
 - Check the new plots in `plotsFolder` :-).
 
