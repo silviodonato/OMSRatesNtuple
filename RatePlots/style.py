@@ -2,7 +2,7 @@ from ROOT import TLegend,kBlue,kMagenta,kRed,kGreen,TStyle
 
 title_vsTime = "Trigger cross-section vs time"
 title_vsLumi = "Trigger cross-section vs int lumi"
-timeLabel = "days since Mar 31, 2023"
+timeLabel = "days since Apr 30, 2023"
 #xsecLabel = "cross section [cm2]"
 xsecLabel = "rate at %0.1fE34 cm-2s-1"
 ratesLabel = "rate [Hz]"
