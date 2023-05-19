@@ -200,7 +200,8 @@ def readOptions(args, triggers, selections):
     if nbins<0 and lumisPerBin<0: nbins=1000
     if nbins>0 and lumisPerBin>0: raise Exception("You have to use one and only one option between --lumisPerBin and --nbins.")
     if not inputFile and not inputFolder: 
-        inputFile = "/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root"
+        inputFile = "/afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2023/physics_merged.root"
+        #inputFile = "/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root"
         print ("Using default inputFile = %s"%inputFile)
     if inputFolder and inputFile:  raise Exception("You cannot --input and --inputFolder at the same time.")
     print(args)
