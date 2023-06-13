@@ -8,12 +8,16 @@ The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 """
 
 #run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
+lastNdays = 7 ## look only at the runs of the last N days
 run_min = 363360 # MWGR#1 2023
+#run_min = 366396 # first stable beam 2023
 run_max = 999000
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
-minimum_integratedLumi = -1. # require at least some pb-1 (?) per run 
-minimum_hltevents = -10E3 # require a minimum of events passing HLT
+#run_min= 367574-10
+#run_max= 367574+10
+minimum_integratedLumi = -1.E-3 # require at least some pb-1 (?) per run 
+minimum_hltevents = -1 # require a minimum of events passing HLT
 outputFolder = "2023"
 
 #missing last json
@@ -41,7 +45,7 @@ minLS = 0
 maxLS = 50000
 maxHLTPaths = 5000
 maxL1Bits = 5000
-max_pages = 10000
+max_pages = 10000 #10000
 
 import sys
 import os
@@ -88,16 +92,42 @@ def json( dic, run , lumi):
 
 
 ###############################################
-
+from datetime import datetime, timedelta
+day_start = datetime.today()-timedelta(days=lastNdays)
 data = getOMSdata(omsapi, "runs", 
     attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"], 
     filters = {
         "run_number":[run_min, run_max], 
         "recorded_lumi":[minimum_integratedLumi, None], 
         "hlt_physics_counter":[minimum_hltevents, None],
+        "end_time":[day_start.isoformat(), "3000-01-01T00:00:00Z"], ## exclude ongoing runs (end_time=None)
     }, 
     max_pages=max_pages
 )
+
+
+def fromHltKeyToKey(hltkey):
+    print(hltkey)
+    key = ""
+    if "firstCollision" in hltkey:
+        key = "firstCollisions"
+    elif "collision" in hltkey:
+        key = "collisions"
+    elif "physics" in hltkey:
+        key = "physics"
+    elif "circulating" in hltkey:
+        key = "circulating"
+    elif "CRAFT" in hltkey:
+        key = "CRAFT"
+    elif "CRUZET" in hltkey:
+        key = "CRUZET"
+    elif "cosmic" in hltkey:
+        key = "cosmics"
+    elif "special" in hltkey:
+        key = "special"
+    else:
+        key = "other"
+    return key
 
 runs = []
 for d in reversed(data):
@@ -106,13 +136,14 @@ for d in reversed(data):
     print(run , d['attributes']['recorded_lumi'], len(d['attributes']['components']), d['attributes']['l1_key'])
     if job_i>=0 and job_tot>0:
         if run%job_tot==job_i:
-            runs.append(run)
+            runs.append((run, fromHltKeyToKey(hltkey)))
     else:
-        runs.append(run)
+        runs.append((run, fromHltKeyToKey(hltkey)))
+
 
 print("Doing %d runs="%len(runs),runs)
-for run in runs:
-    fName = outputFolder+"/"+str(run)+".root"
+for (run, key) in runs:
+    fName = outputFolder+"/"+key+"_"+str(run)+".root"
     if os.path.isfile(fName):
         print(fName+" already existing, skipping.")
         continue
@@ -147,7 +178,6 @@ for run in runs:
         lumisections[var] = []
 
 
-    from datetime import datetime
     for row in data:
         for var in det_flags:
             lumisections[var].append(row['attributes'][var+"_ready"])
@@ -276,6 +306,10 @@ for run in runs:
 #    query.attrs(["pre_dt_before_prescale_counter","last_lumisection_number","first_lumisection_number","last_lumisection_number"]) #
     query.attrs(["pre_dt_before_prescale_counter","last_lumisection_number","first_lumisection_number"]) #
     for L1_bit in list(l1BitMap.keys())[:maxL1Bits]:
+        if type(L1_bit)!=int: 
+            print("Something wrong with %d. Skipping"%L1_bit)
+            print("l1BitMap[L1_bit] = %s"%l1BitMap[L1_bit])
+            continue
     #    print(L1_bit)
         L1_Counters[L1_bit] = []
         query.clear_filter()
@@ -292,14 +326,27 @@ for run in runs:
         data = oms['data']
         for row in data:
     #        run[0], aaa, new_lumi = [int(el) for el in row['id'].split("__")]
+            if row['attributes']['pre_dt_before_prescale_counter']==None: row['attributes']['pre_dt_before_prescale_counter']=0
             L1_Counters[L1_bit].append(int(row['attributes']['pre_dt_before_prescale_counter']))
         if L1_bit==0:
             for row in data:
         #        run[0], aaa, new_lumi = [int(el) for el in row['id'].split("__")]
                 L1lumis.append(row['attributes']['last_lumisection_number'])
+        ## See examples with empty entries https://cmsoms.cern.ch/cms/triggers/l1_algo?cms_run=367474&cms_l1_bit=110&cms_l1_bit_name=
+        ## https://cmsoms.cern.ch/agg/api/v1/l1algorithmtriggers/?fields=pre_dt_before_prescale_counter&filter[run_number][EQ]=367474&filter[bit][EQ]=368&filter[first_lumisection_number][GE]=0&filter[last_lumisection_number][LE]=50000&page[offset]=0&page[limit]=10000
+        if len(L1_Counters[L1_bit]) == 0:
+            print("Problems with %s"%query.data_query(), L1_bit, run)
+            print("Setting it to zero.")
+            L1_Counters[L1_bit] = len(L1lumis)*[0]
         query.attrs(["pre_dt_before_prescale_counter"]) #
     
     ###############
+    
+    if HLTlumis!=L1lumis:
+        print("HLTlumis!=L1lumis")
+        print("HLTlumis=", len(HLTlumis), HLTlumis)
+        print("L1lumis=", len(L1lumis), L1lumis)
+#        continue
     
     ### Init root file
     print("Creating ", fName)
@@ -332,7 +379,6 @@ for run in runs:
     # Fill tree
     first_el = True
     for idx_lumi,l in enumerate(lumisections['lumisection_number']):
-#        print(l, L1lumis, HLTlumis)
         if l in L1lumis and l in HLTlumis:
             for var in det_flags+lhc_flags+lhc_int+lhc_int_add+lhc_float+lhc_float_add:
                 lumisections_vars[var.replace("_number","")][0] = lumisections[var][idx_lumi]  if lumisections[var][idx_lumi] else False
@@ -341,7 +387,14 @@ for run in runs:
                 HLTAccepted[path][0] = HLT_Counters[path][hlt_lumi]
             l1_lumi = L1lumis.index(l)
             for l1bit in L1_Counters:
-                L1Counts_var[l1bit][0] = L1_Counters[l1bit][l1_lumi]
+                if l1_lumi>=0 and l1_lumi<len(L1_Counters[l1bit]):
+                    L1Counts_var[l1bit][0] = L1_Counters[l1bit][l1_lumi]
+                else:
+                    print("Something wrong, no l1_lumi in L1_Counters[l1bit]. Forcing L1Counts_var[l1bit][0] = 0")
+                    print(l1_lumi, l1bit, len(L1_Counters[l1bit]))
+                    print(l, idx_lumi, hlt_lumi, l1_lumi, L1lumis, HLTlumis)
+                    L1Counts_var[l1bit][0] = 0
+                ###
             lumi[0] = l
             tree.Fill()
 #            print("tree.Fill()",run, lumi[0])

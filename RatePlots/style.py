@@ -2,7 +2,7 @@ from ROOT import TLegend,kBlue,kMagenta,kRed,kGreen,TStyle
 
 title_vsTime = "Trigger cross-section vs time"
 title_vsLumi = "Trigger cross-section vs int lumi"
-timeLabel = "days since Aug 31, 2022"
+timeLabel = "days since Apr 30, 2023"
 #xsecLabel = "cross section [cm2]"
 xsecLabel = "rate at %0.1fE34 cm-2s-1"
 ratesLabel = "rate [Hz]"
@@ -18,7 +18,8 @@ maxY=-1
 fillNumberMargin = 5
 
 
-def createLegend(xmin=0.18, ymin=0.15, xmax=0.82, ymax=0.25):
+#def createLegend(xmin=0.18, ymin=0.15, xmax=0.82, ymax=0.25):
+def createLegend(xmin=0.16, ymin=0.88, xmax=0.87, ymax=0.98):
     leg = TLegend(xmin,ymin,xmax,ymax)
 #    leg.SetFillStyle(0)
     return leg

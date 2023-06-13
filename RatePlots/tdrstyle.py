@@ -152,6 +152,8 @@ def setTDRStyle():
   ## Mod for OMS rates with two scales:
   tdrStyle.SetPadLeftMargin(0.12)
   tdrStyle.SetPadRightMargin(0.12)
+  tdrStyle.SetPadBottomMargin(0.12)
+  tdrStyle.SetPadTopMargin(0.12)
   tdrStyle.SetPadTickY(0)
   tdrStyle.SetTitleXOffset(1.0)
   tdrStyle.SetTitleYOffset(1.4)
