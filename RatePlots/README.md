@@ -13,20 +13,20 @@ cd RatePlots
 ln -s /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*.py
 python3 trigger_plots.py --help
 ```
-Note that you can even use directly the remote file
+Note that you can even use directly the remote file:
 ```
 python3 /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --help
 ```
 
 #### Method 2: Get RatePlots from GitHub (recommended)
-- Get OMSRatesNtuple following https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md
+- Get OMSRatesNtuple following https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md and the:
 ```
 cd RatePlots
 python3 trigger_plots.py --help
 ```
 
 #### Method 3: Copy RatePlots from lxplus (if you don't have a GitHub account)
-- Copy RatePlots from an existing folder
+- Copy RatePlots from an existing folder:
 ```
 mkdir RatePlots
 cd RatePlots
@@ -36,10 +36,10 @@ python3 trigger_plots.py --help
 
 ### Run Rateplots
 - Check some parameters in `python3 trigger_plots.py --help`. You can find some example in doAll.sh.
-- Run `python3 trigger_plots.py` (example: `python3 trigger_plots.py --rates --xsect --vsFill --vsPU --vsIntLumi --vsTime --lumisPerBin 30 --inputFile
+- Run `python3 trigger_plots.py` (example: `python3 trigger_plots.py --xsect --vsPU --vsIntLumi --lumisPerBin 30 --inputFile
 root://eoscms.cern.ch//eos/cms/store/group/dpg_trigger/comm_trigger/TriggerStudiesGroup/OMSRatesNtuple/2023/physics_merged.root --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v --selections "PU50_60=cms_ready && beams_stable && beam2_stable
 && pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable"`)
-- Check the new plots in `plotsFolder` :-).
+- Check the new plots in `plots` :-).
 
 ### Parameter description
 ```
