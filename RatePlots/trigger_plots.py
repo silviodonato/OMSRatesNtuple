@@ -9,8 +9,8 @@ import os
 chain = ROOT.TChain("tree")
 
 selectionDefault = {
-    "PU50_60": "golden_json && pileup>50 && pileup<60",
-    "inclusive": "golden_json",
+    "PU50_60": "cms_ready && beams_stable && pileup>50 && pileup<60",
+    "inclusive": "cms_ready && beams_stable",
 }
 
 triggerDefault = [
