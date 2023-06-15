@@ -4,9 +4,31 @@ This script produce trigger rate plots from the OMS ntuples, which are currently
 As the size of the OMS nuples in `/eos/user/s/sdonato/public/OMS_rates/v2.0/` is less than 2 GB, it might be convenient to copy it locally.
 The folder contains also some merged ntuples (eg. goldejson_skim.root, physics_merged.root) which speed up the code.
 
+### Installation of RatePlots
 
-### Install RatePlots
-- Get OMSRatesNtuple following https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md and go in `RatePlots` folder.
+#### Method 1: Link to file from lxplus (quickest method)
+```
+mkdir RatePlots
+cd RatePlots
+ln -s /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*.py
+python3 trigger_plots.py --help
+```
+
+#### Method 2: Get RatePlots from GitHub (recommended)
+- Get OMSRatesNtuple following https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md
+```
+cd RatePlots
+python3 trigger_plots.py --help
+```
+
+#### Method 3: Copy RatePlots from lxplus (if you don't have a GitHub account)
+- Copy RatePlots from an existing folder
+```
+mkdir RatePlots
+cd RatePlots
+cp /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*py
+python3 trigger_plots.py --help
+```
 
 ### Run Rateplots
 - Check some parameters in `python3 trigger_plots.py --help`. You can find some example in doAll.sh.
