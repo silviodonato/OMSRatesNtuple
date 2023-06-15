@@ -6,12 +6,16 @@ The folder contains also some other merged ntuples (eg. goldejson_skim.root, phy
 
 ### Installation of RatePlots
 
-#### Method 1: Link to file from lxplus (quickest method)
+#### Method 1: Link to an existing copy of RatePlots (quickest method)
 ```
 mkdir RatePlots
 cd RatePlots
 ln -s /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*.py
 python3 trigger_plots.py --help
+```
+Note that you can even use directly the remote file
+```
+python3 /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --help
 ```
 
 #### Method 2: Get RatePlots from GitHub (recommended)
