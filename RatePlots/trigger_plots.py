@@ -345,7 +345,7 @@ for selFolder in selections:
     histos_vsTime = {}
     histos_vsFill = {}
     histos_vsRun = {}
-    from tools import setStyle,getCrossSection, createFit, addPileUp,getPlotVsNewVar
+    from tools import setStyle, getCrossSection, createFit, addPileUp, getPlotVsNewVar, saveSh
     from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel,runLabel,legStyle,getColor
     xsecLabel = xsecLabel%(refLumi/1E34)
     for i, trigger in enumerate(triggers[:]):
@@ -420,6 +420,8 @@ for selFolder in selections:
                     puScaleMax = 1.1*pileup_vs.GetMaximum()
                     setStyle(pileup_vs, puColor)
                 print("Making plots for %s %s %s"%(prefix, vs, trigger))
+                filePath = os.path.abspath(__file__)
+                saveSh(outFolder+"/"+prefix+trigger+"_"+vs+".sh", filePath, useRate, vs, trigger, inputFolder, inputFile, plotsFolder, removeOutliers, runMin, runMax, collisions, batch, testing, lumisPerBin, refLumi, '"%s"="%s"'%(selFolder,selection), nbins)
                 if vs in ["vsTime","vsFill","vsRun"]: 
                     # make trigger cross sections plots vs time, showing the pileup_vs on the right axis
                     print("xsecLabel %s"%xsecLabel)
@@ -450,9 +452,10 @@ for selFolder in selections:
                         leg.AddEntry(pileup_vs_scaled,"pileup","p")
                     leg.AddEntry(xsec_vs,trigger,legStyle)
                     leg.Draw()
-                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_"+vs+".root")
-                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_"+vs+".png")
-    #                1/0
+                    outputFile = outFolder+"/"+prefix+trigger+"_"+vs+".root"
+                    canv.SaveAs(outputFile)
+                    canv.SaveAs(outputFile.replace(".root",".png"))
+    #                1/0 vs, xsec_vs, 
                 
                 
                 # make trigger cross sections plots vs integrated lumi, showing the pileup_vs on the right axis
@@ -483,8 +486,10 @@ for selFolder in selections:
                         leg.AddEntry(pileup_vs_scaled,"pileup","p")
                     leg.AddEntry(xsec_vs,trigger,legStyle) # or lep or f</verbatim>
                     leg.Draw()
-                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsIntLumi.root")
-                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsIntLumi.png")
+                    outputFile = outFolder+"/"+prefix+trigger+"_vsIntLumi.root"
+                    canv.SaveAs(outputFile)
+                    canv.SaveAs(outputFile.replace(".root",".png"))
+
                 
                 
                 # make trigger cross sections plots vs pileup_vs
@@ -507,7 +512,9 @@ for selFolder in selections:
                     leg.AddEntry(xsec_vs,trigger,legStyle) # or lep or f</verbatim>
                     xsec_vsPU.Draw("P") ##keep pileup_vs in backgroup
                     leg.Draw()
-                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsPU.root")
-                    canv.SaveAs(outFolder+"/"+prefix+trigger+"_vsPU.png")
+                    outputFile = outFolder+"/"+prefix+trigger+"_vsPU.root"
+                    canv.SaveAs(outputFile)
+                    canv.SaveAs(outputFile.replace(".root",".png"))
+
 #                del canv
 

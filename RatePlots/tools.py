@@ -207,3 +207,24 @@ def readOptions(args, triggers, selections):
     print(args)
     return useRates, vses, triggers, inputFolder, inputFile, plotFolder, removeOutliers, runMin, runMax, collisions, batch, testing, lumisPerBin, refLumi, selections, nbins
 
+
+def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, plotsFolder, removeOutliers, runMin, runMax, collisions, batch, testing, lumisPerBin, refLumi, selection, nbins):
+    out_ = open(outputFile, 'w')
+    command = "python3 %s "%(filePath)
+    if useRate: command += "--rates "
+    else: command += "--xsect "
+    if not collisions: command += "--cosmics "
+    command += "--%s "%vs
+    command += "--triggers %s "%trigger
+    if len(inputFolder)>0: command += "--input %s "%inputFolder
+    if len(inputFile)>0: command += "--inputFile %s "%inputFile
+    command += "--output %s "%plotsFolder
+    command += "--runMin %s "%runMin
+    command += "--runMax %s "%runMax
+    command += "--refLumi %s "%refLumi
+    command += "--lumisPerBin %s "%lumisPerBin
+    command += "--nbins %s "%nbins
+    command += "--selections %s "%selection
+    out_.write(command)
+    out_.close()
+
