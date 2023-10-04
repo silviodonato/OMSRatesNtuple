@@ -10,7 +10,7 @@ The folder contains also some other merged ntuples (eg. goldejson_skim.root, phy
 ```
 mkdir RatePlots
 cd RatePlots
-ln -s /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*.py
+ln -s /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*.py .
 python3 trigger_plots.py --help
 ```
 Note that you can even use directly the remote file:
