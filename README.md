@@ -14,5 +14,5 @@ then follow the corresponding [OMS_ntuplizer](https://github.com/silviodonato/OM
 
 ### Plots
 
-- The plots obtained centrally are available at https://sdonato.web.cern.ch/sdonato/OMSRatesNtuple
+- The plots obtained centrally are available at https://sdonato.web.cern.ch/OMSRatesNtuple
 
