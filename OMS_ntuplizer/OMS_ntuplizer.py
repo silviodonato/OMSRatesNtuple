@@ -9,8 +9,8 @@ The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 
 #run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
 lastNdays = 7 ## look only at the runs of the last N days
-run_min = 363360 # MWGR#1 2023
-#run_min = 366396 # first stable beam 2023
+run_min = 375859 # first cosmics run after last 2023 collisions
+#run_min = 3????? # first stable beam 2024 ???
 run_max = 999000
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
@@ -18,7 +18,7 @@ run_max = 999000
 #run_max= 367574+10
 minimum_integratedLumi = -1.E-3 # require at least some pb-1 (?) per run 
 minimum_hltevents = -1 # require a minimum of events passing HLT
-outputFolder = "2023"
+outputFolder = "2024"
 
 #missing last json
 #run_min = 362439 
@@ -92,10 +92,13 @@ def json( dic, run , lumi):
 
 
 ###############################################
+perRunVariables_int = []
+perRunVariables_float = ["b_field", "energy","energy"]
+
 from datetime import datetime, timedelta
 day_start = datetime.today()-timedelta(days=lastNdays)
-data = getOMSdata(omsapi, "runs", 
-    attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"], 
+data_runs = getOMSdata(omsapi, "runs", 
+    attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"]+perRunVariables_int+perRunVariables_float, 
     filters = {
         "run_number":[run_min, run_max], 
         "recorded_lumi":[minimum_integratedLumi, None], 
@@ -106,15 +109,20 @@ data = getOMSdata(omsapi, "runs",
 )
 
 
-def fromHltKeyToKey(hltkey):
+def fromHltKeyToKey(hltkey, run_db):
     print(hltkey)
+    b_field = run_db["attributes"]["b_field"]
+    energy = run_db["attribu"]["energy"]
+    
     key = ""
     if "firstCollision" in hltkey:
         key = "firstCollisions"
     elif "collision" in hltkey:
         key = "collisions"
-    elif "physics" in hltkey:
-        key = "physics"
+    elif "Run2024HI" in hltkey:
+        key = "HIon"
+    elif "PRef" in hltkey:
+        key = "PRef"
     elif "circulating" in hltkey:
         key = "circulating"
     elif "CRAFT" in hltkey:
@@ -122,23 +130,38 @@ def fromHltKeyToKey(hltkey):
     elif "CRUZET" in hltkey:
         key = "CRUZET"
     elif "cosmic" in hltkey:
-        key = "cosmics"
+        if b_field<1:
+            key = "CRUZET"
+        elif b_field>3:
+            key = "CRAFT"
+        else:
+            key = "cosmics"
     elif "special" in hltkey:
         key = "special"
+    elif "physics" in hltkey and energy>5000:
+        key = "physics"
     else:
         key = "other"
     return key
 
+def selectRun(data_runs, run):
+    run_db = [r for r in data_runs if r['id']==str(run)]
+    if len(run_db)!=1: print(data_runs, "\n", run, "\n", run_db)
+    assert(len(run_db)==1)
+    run_db = run_db[0]
+    return run_db
+
 runs = []
-for d in reversed(data):
+for d in reversed(data_runs):
     run = d['attributes']['run_number']
     hltkey = d['attributes']['hlt_key']
     print(run , d['attributes']['recorded_lumi'], len(d['attributes']['components']), d['attributes']['l1_key'])
+    run_db = selectRun(data_runs, run)
     if job_i>=0 and job_tot>0:
         if run%job_tot==job_i:
-            runs.append((run, fromHltKeyToKey(hltkey)))
+            runs.append((run, fromHltKeyToKey(hltkey, run_db)))
     else:
-        runs.append((run, fromHltKeyToKey(hltkey)))
+        runs.append((run, fromHltKeyToKey(hltkey, run_db)))
 
 
 print("Doing %d runs="%len(runs),runs)
@@ -162,6 +185,8 @@ for (run, key) in runs:
         }, 
         max_pages=max_pages
     )
+    
+    run_db = selectRun(data_runs, run)
     
     lumisections = {}
     det_flags = ['bpix', 'fpix', 'tob', 'tecp', 'tecm', 'tibtid', 'esm', 'ebp', 'esp', 'eep', 'ebm', 'eem', 'ho', 'hbhea', 'hbhec', 'hbheb', 'hf', 'gemm', 'gemp', 'gem', 'dt0', 'dtm', 'dtp', 'rpc', 'cscm', 'cscp', 'rp_sect_45', 'rp_sect_56', 'rp_time']
@@ -193,7 +218,7 @@ for (run, key) in runs:
         lumisections['hour'].append(int(HH))
         lumisections['minute'].append(int(MM))
         lumisections['second'].append(int(SS))
-        lumisections['time'].append(int(datetime(int(yy), int(mm), int(dd), int(HH), int(MM),int(SS)).timestamp()) - int(datetime(2023,1,1).timestamp()))
+        lumisections['time'].append(int(datetime(int(yy), int(mm), int(dd), int(HH), int(MM),int(SS)).timestamp()) - int(datetime(2024,1,1).timestamp()))
         lumisections['deadtime'] = [ r/d if d>0 else 1 for r, d in zip(lumisections['recorded_lumi_per_lumisection'], lumisections['delivered_lumi_per_lumisection'])]
         run_recLumi = sum(lumisections["recorded_lumi_per_lumisection"])
         cms_ready = True
@@ -353,6 +378,17 @@ for (run, key) in runs:
     f = ROOT.TFile(fName,"recreate")
     tree = ROOT.TTree("tree","tree")
     
+    ### fill constant value (eg. B_field)
+    for var in perRunVariables_float:
+        lumisections_vars[var] = SetVariable(tree,var,'f',1,1)
+    
+    for var in perRunVariables_int:
+        lumisections_vars[var] = SetVariable(tree,var,'I',1,1)
+    
+    for var in perRunVariables_float+perRunVariables_int:
+        lumisections_vars[var][0] = run_db["attributes"][var]
+    
+    ### fill lumi dependent variables value (eg. pileup per lumi)
     lumi = SetVariable(tree,"lumi",'i',1,1)
     run_ = SetVariable(tree,"run",'i',1,1)
     run_[0] = run
@@ -364,12 +400,12 @@ for (run, key) in runs:
     for var in det_flags+lhc_flags:
         lumisections_vars[var] = SetVariable(tree,var,'O',1,1)
     
+    for var in lhc_float+lhc_float_add:
+        lumisections_vars[var] = SetVariable(tree,var,'f',1,1)
+    
     for var in lhc_int+lhc_int_add:
         var = var.replace("_number","") ## lumisection_number -> lumisection
         lumisections_vars[var] = SetVariable(tree,var,'I',1,1)
-    
-    for var in lhc_float+lhc_float_add:
-        lumisections_vars[var] = SetVariable(tree,var,'f',1,1)
     
     for bit in l1BitMap:
         L1Counts_var[bit] = SetVariable(tree,l1BitMap[bit],'i',1,1)
