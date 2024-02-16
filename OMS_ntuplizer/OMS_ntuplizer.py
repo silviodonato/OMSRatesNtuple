@@ -9,7 +9,7 @@ The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 
 #run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
 lastNdays = 7 ## look only at the runs of the last N days
-run_min = 375859 # first cosmics run after last 2023 collisions
+run_min = 376808 # first cosmics run of cosmics 2024
 #run_min = 3????? # first stable beam 2024 ???
 run_max = 999000
 #run_min = 362079 # RunG
@@ -112,7 +112,7 @@ data_runs = getOMSdata(omsapi, "runs",
 def fromHltKeyToKey(hltkey, run_db):
     print(hltkey)
     b_field = run_db["attributes"]["b_field"]
-    energy = run_db["attribu"]["energy"]
+    energy = run_db["attributes"]["energy"]
     
     key = ""
     if "firstCollision" in hltkey:
