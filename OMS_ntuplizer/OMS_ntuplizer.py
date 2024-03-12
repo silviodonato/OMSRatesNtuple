@@ -7,11 +7,15 @@ and from https://gitlab.cern.ch/cms-tsg-fog/ratemon/-/tree/master/ .
 The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 """
 
+
 #run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
 lastNdays = 7 ## look only at the runs of the last N days
 run_min = 376808 # first cosmics run of cosmics 2024
 #run_min = 3????? # first stable beam 2024 ???
 run_max = 999000
+
+
+
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
 #run_min= 367574-10
@@ -32,9 +36,13 @@ outputFolder = "2024"
 #run_max = 326004
 from tools import verbose
 overwrite = False #overwrite output files
+#requiredHLTpath = None
 #requiredHLTpath = "AlCa_EcalEtaEBonly_v" #require this trigger to be in the menu (ie. require a collision menu)
 requiredHLTpath = "HLT_EcalCalibration_v" #require this trigger to be in the menu (ie. require a collision menu)
 badRuns = [360088, 357112,357104, 355872, 321775, 318734, 319908, 319698, 321712] #the code crashes on these runs
+
+## lumisection 2^18 / 11245.5Hz = 23.31 s
+
 
 #load json files from https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/
 muonJsonFile = "Cert_Collisions2022_355100_362760_Muon.json" 
@@ -241,6 +249,40 @@ for (run, key) in runs:
     #q.custom("include", "meta")
 
     ####################################################################
+    
+    ## Eg. https://cmsoms.cern.ch/agg/api/v1/streams/?fields=stream_name&filter[run_number][EQ]=355435&page[offset]=0&page[limit]=10000&group[granularity]=run
+    data = getOMSdata(omsapi, "streams", 
+        attributes = ["stream_name"], 
+        filters = {
+            "run_number": [run],
+        }, 
+        customs = {
+            "group[granularity]" : "run"
+        },
+        max_pages=max_pages
+    )
+    streams = []
+    for row in data[:]:
+        streams.append(row['attributes']['stream_name'])
+    
+    print("Streams:")
+    print(streams)
+    
+    ####################################################################
+    
+    ## Eg. https://cmsoms.cern.ch/agg/api/v1/datasetrates/datasets/?filter[run_number][EQ]=355435&page[offset]=0&page[limit]=10000
+    data = getOMSdata(omsapi, "datasetrates/datasets", 
+        attributes = [], 
+        filters = {
+            "run_number": [run],
+        }, 
+        max_pages=max_pages
+    )
+    datasets = data["attributes"]["datasets"]
+    
+    print("Dataset:")
+    print(datasets)
+    ####################################################################
 
     data = getOMSdata(omsapi, "hltpathinfo", 
         attributes = ["path_name"], 
@@ -249,19 +291,20 @@ for (run, key) in runs:
         }, 
         max_pages=max_pages
     )
+
     HLTPaths = []
     for row in data[:maxHLTPaths]:
         HLTPaths.append(row['attributes']['path_name'])
 
     HLTpaths_noVersion = [stripVersion(path) for path in HLTPaths]
-    if not requiredHLTpath in HLTpaths_noVersion:
+    if requiredHLTpath and (not requiredHLTpath in HLTpaths_noVersion):
         print()
         print(HLTpaths_noVersion)
         print()
         print("Run=%d doesn't contain path %s. Skipping file %s"%(run,requiredHLTpath,fName))
         continue
 
-    ###############
+    ############### Get HLT Path Rate #########################
     query = omsapi.query("hltpathrates")
     query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
@@ -286,8 +329,9 @@ for (run, key) in runs:
         # Execute query and fetch data
         resp = query.data()
         oms = resp.json()   # all the data returned by OMS
+        if not "data" in oms:
+            print(oms)
         data = oms['data']
-        HLTCounters = {}
         for row in data:
     #        run[0], aaa, new_lumi = [int(el) for el in row['id'].split("__")]
             HLT_Counters[HLT_path].append(row['attributes']['counter'])
@@ -297,7 +341,98 @@ for (run, key) in runs:
                 HLTlumis.append(row['attributes']['last_lumisection_number'])
         query.attrs(["counter"]) #
 
-    #print(HLT_Counters[HLT_path])
+    ##check that all triggers have the same number of lumisections!
+    for path in HLT_Counters:
+        assert(len(HLT_Counters[path])==len(HLTlumis))
+
+    ############### Get HLT Dataset Rate #########################  
+    # Eg. https://cmsoms.cern.ch/agg/api/v1/datasetrates/?filter[dataset_name]=AlCaP0&filter[run_number]=355435
+
+    query = omsapi.query("datasetrates")
+    query.set_verbose(verbose)
+    query.per_page = max_pages  # to get all names in one go
+
+    # Projection. Specify attributes you want to fetch
+    firstPath = True
+    Dataset_Counters = {}
+    Datasetlumis = []
+    query.attrs(["events","rate",'last_lumisection_number']) #
+    for dataset in reversed(datasets):
+    #    print(HLT_path)
+        Dataset_Counters[dataset] = [0]*len(HLTlumis)
+        query.clear_filter()
+
+        # Filter run
+        query.filter("run_number", run )
+
+        query.filter("dataset_name", dataset)
+        query.filter("first_lumisection_number", minLS, "GE")
+        query.filter("last_lumisection_number", maxLS, "LE")
+
+        # Execute query and fetch data
+        resp = query.data()
+        oms = resp.json()   # all the data returned by OMS
+        data = oms['data']
+        for row in data:
+            lumi = row['attributes']['last_lumisection_number']
+            Dataset_Counters[dataset][HLTlumis.index(lumi)] = row['attributes']['events']
+#    #        run[0], aaa, new_lumi = [int(el) for el in row['id'].split("__")]
+#            Dataset_Counters[dataset].append(row['attributes']['events'])
+#        if 'last_lumisection_number' in row['attributes']:
+#            for row in data:
+#        #        run[0], aaa, new_lumi = [int(el) for el in row['id'].split("__")]
+#                Datasetlumis.append(row['attributes']['last_lumisection_number'])
+        query.attrs(["events","rate","last_lumisection_number"]) #
+    
+#    ##check that all datasets have the same number of lumisections!
+#    for dataset in Dataset_Counters:
+#        assert(len(Dataset_Counters[dataset])==len(Datasetlumis))
+    print(dataset, Dataset_Counters[dataset])
+
+    ############### Get HLT Stream Rate #########################  
+    # Eg. https://cmsoms.cern.ch/agg/api/v1/streams/?&filter[run_number][EQ]=355435&page[offset]=0&page[limit]=10000&group[granularity]=lumisection&filter[stream_name]=RPCMON
+
+    query = omsapi.query("streams")
+    query.set_verbose(verbose)
+    query.per_page = max_pages  # to get all names in one go
+
+    # Projection. Specify attributes you want to fetch
+    firstPath = True
+    Stream_Counters = {}
+    Stream_Bandwidth = {}
+    Streamlumis = []
+    query.attrs(["n_events",'last_lumisection_number','bandwidth']) #
+    for stream in reversed(streams):
+    #    print(HLT_path)
+        Stream_Counters[stream] = [0]*len(HLTlumis)
+        Stream_Bandwidth[stream] = [0]*len(HLTlumis)
+        query.clear_filter()
+
+        # Filter run
+        query.filter("run_number", run )
+
+        query.filter("stream_name", stream)
+        query.filter("first_lumisection_number", minLS, "GE")
+        query.filter("last_lumisection_number", maxLS, "LE")
+
+        # Execute query and fetch data
+        resp = query.data()
+        oms = resp.json()   # all the data returned by OMS
+        data = oms['data']
+        for row in data:
+            lumi = row['attributes']['last_lumisection_number']
+            Stream_Counters[stream][HLTlumis.index(lumi)] = row['attributes']['n_events']
+            Stream_Bandwidth[stream][HLTlumis.index(lumi)] = row['attributes']['bandwidth']
+        query.attrs(["n_events","bandwidth","last_lumisection_number"]) #
+
+    ##check that all streams have the same number of lumisections!
+#    for stream in Stream_Bandwidth:
+#        assert(len(Stream_Bandwidth[stream])==len(HLTlumis))
+#        assert(len(Stream_Counters[stream])==len(HLTlumis))
+    
+    print(stream, Stream_Counters[stream], Stream_Bandwidth[stream])
+    
+    
     #################################################################
 
     data = getOMSdata(omsapi, "l1algorithmtriggers", 
@@ -315,11 +450,6 @@ for (run, key) in runs:
         algo = row['attributes']
         l1BitMap[int(algo['bit'])] = algo['name']
     # Create a query.
-    query = omsapi.query("l1algorithmtriggers")
-    query.set_verbose(verbose)
-    query.per_page = max_pages  # to get all names in one go
-
-    ###############
     query = omsapi.query("l1algorithmtriggers")
     query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
@@ -397,6 +527,16 @@ for (run, key) in runs:
     for path in reversed(HLTPaths):
         HLTAccepted[path] = SetVariable(tree, stripVersion(path),'i',1,1)
     
+    DatasetAccepted = {}
+    for dataset in reversed(datasets):
+        DatasetAccepted[dataset] = SetVariable(tree, "Dataset_%s"%dataset,'i',1,1)
+    
+    StreamAccepted = {}
+    StreamBandwidth = {}
+    for stream in reversed(streams):
+        StreamAccepted[stream] = SetVariable(tree, "Stream_%s"%stream,'i',1,1)
+        StreamBandwidth[stream] = SetVariable(tree, "StreamBandwidth_%s"%stream,'f',1,1)
+    
     for var in det_flags+lhc_flags:
         lumisections_vars[var] = SetVariable(tree,var,'O',1,1)
     
@@ -421,6 +561,12 @@ for (run, key) in runs:
             hlt_lumi = HLTlumis.index(l)
             for path in HLT_Counters:
                 HLTAccepted[path][0] = HLT_Counters[path][hlt_lumi]
+            ## Dataset and Streams lumisections are synch'ed with HLT paths
+            for dataset in Dataset_Counters:
+                DatasetAccepted[dataset][0] = Dataset_Counters[dataset][hlt_lumi]
+            for stream in Stream_Counters:
+                StreamAccepted[stream][0] = Stream_Counters[stream][hlt_lumi]
+                StreamBandwidth[stream][0] = Stream_Bandwidth[stream][hlt_lumi]
             l1_lumi = L1lumis.index(l)
             for l1bit in L1_Counters:
                 if l1_lumi>=0 and l1_lumi<len(L1_Counters[l1bit]):
