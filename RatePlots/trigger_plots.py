@@ -195,11 +195,17 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptFit(0)
 
 ## get fill number from the first event
-chain.GetEvent(0)
-firstFill = chain.fill
-firstRun = chain.run
+#chain.GetEvent(0)
+#firstFill = chain.fill
+#firstRun = chain.run
 
-chain.Draw("fill")
+chain.Draw("fill >> tmpFill","","GOFF")
+tmpFill = ROOT.gROOT.Get("tmpFill")
+firstFill, lastFill = tmpFill.GetXaxis().GetXmin(), tmpFill.GetXaxis().GetXmax()
+
+chain.Draw("run >> tmpRun","","GOFF")
+tmpRun = ROOT.gROOT.Get("tmpRun")
+firstRun, lastRun = tmpRun.GetXaxis().GetXmin(), tmpRun.GetXaxis().GetXmax()
 
 import fnmatch
 
