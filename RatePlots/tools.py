@@ -64,6 +64,15 @@ def getHisto(weight, chain, var, binning, selection, option="GOFF"):
     histo = ROOT.gROOT.Get(hName)
     print ("%s %f"%(histo.GetName(),histo.Integral()))
     assert(type(histo)==ROOT.TH1F)
+    if "time" in var and histo!=None:
+        print(histo)
+        print(histo!=None)
+        print(histo.GetName())
+        timeAxis = histo.GetXaxis()
+        timeAxis.SetTimeDisplay(1)
+        timeAxis.SetTimeFormat(timeAxis.ChooseTimeFormat(timeAxis.GetXmax()-timeAxis.GetXmin()))
+#        timeAxis.SetTimeFormat("%Y-%m-%d %H:%M:%S")
+        timeAxis.SetTimeOffset(0)
     return histo
 
 
