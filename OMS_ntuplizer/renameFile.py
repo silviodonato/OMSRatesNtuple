@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(
     )
 
 #parser.add_argument( 'run', type = int, help = 'run for which rates should be retrieved' )
-parser.add_argument( '--folder', default='-1', help = 'select a input folder')
+parser.add_argument( '--folder', default='-1', required = True, help = 'select a input folder')
 
 args = parser.parse_args()
 
@@ -97,13 +97,15 @@ data_runs = getOMSdata(omsapi, "runs",
 
 print("Doing %s"%folder)
 for run in runs:
-    oldFileName = folder+"/"+[f for f in os.listdir(folder) if str(run) in f][0]
-    run_db = selectRun(data_runs, run)
-    hltkey = run_db['attributes']['hlt_key']
-    key = fromHltKeyToKey(hltkey, run_db)
-    newFileName = folder+"/"+key+"_"+str(run)+".root"
-    if oldFileName!=newFileName:
-        print("mv %s %s"%(oldFileName,newFileName))
+    oldFileNames = [f for f in os.listdir(folder) if str(run) in f]
+    for oldFileName in oldFileNames:
+        oldFileName = folder+"/"+oldFileName
+        run_db = selectRun(data_runs, run)
+        hltkey = run_db['attributes']['hlt_key']
+        key = fromHltKeyToKey(hltkey, run_db)
+        newFileName = folder+"/"+key+"_"+str(run)+".root"
+        if oldFileName!=newFileName:
+            print("mv %s %s"%(oldFileName,newFileName))
 
 
 #runs = []
