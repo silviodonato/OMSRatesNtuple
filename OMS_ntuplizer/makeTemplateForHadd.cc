@@ -22,8 +22,11 @@ int main(int argc, char **argv) {
     TFile *outFile = new TFile(argv[1], "RECREATE");
     TTree *outTree = new TTree("tree","");
 
+    std::cout << "Output file: " << argv[1] << std::endl;
+
     for (int i = 2; i < argc; ++i) {
         TFile *inFile = TFile::Open(argv[i]);
+        std::cout << "File: " << argv[i] << std::endl;
         if (!inFile) {
             std::cout << "Cannot open file: " << argv[i] << std::endl;
             continue;
@@ -45,8 +48,7 @@ int main(int argc, char **argv) {
             // For the subsequent files, add the new TBranches to the output TTree
             TObjArray *branches = inTree->GetListOfBranches();
             for (int j = 0; j < branches->GetEntries(); ++j) {
-                TBranch *branch = (TBranch*)branches->At(j)->Clone();
-                // Add the branch if it is not already in the output TTree
+                TBranch *branch = (TBranch*)branches->At(j);
                 if (!outTree->GetBranch(branch->GetName()))
                     outTree->Branch(branch->GetName(), branch->GetAddress(), branch->GetTitle());
             }
