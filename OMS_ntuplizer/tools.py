@@ -41,7 +41,7 @@ def getAppSecret():
     return appSecret ## return "" if appSecret is not found
     
 
-def getOMSdata(omsapi,table, attributes, filters, max_pages=max_pages, verbose=verbose):
+def getOMSdata(omsapi,table, attributes, filters, customs={}, max_pages=max_pages, verbose=verbose):
     query = omsapi.query(table)
     query.set_verbose(verbose)
     query.per_page = max_pages  # to get all names in one go
@@ -53,8 +53,21 @@ def getOMSdata(omsapi,table, attributes, filters, max_pages=max_pages, verbose=v
             if  filters[var][1]!=None: query.filter(var, filters[var][1], "LE")
         elif len(filters[var])==1:
             query.filter(var, filters[var][0])
+    for var in customs:
+        query.custom(var, customs[var])
     resp = query.data()
-    oms = resp.json()   # all the data returned by OMS
+    try:
+        oms = resp.json()   # all the data returned by OMS
+    except:
+        print(resp)
+        print("Query failed. Trying again after 3 sec.")
+        import time
+        time.sleep(3) ## resubmit after 3 seconds in case of failure
+        query.set_verbose(True)
+        resp = query.data()
+        oms = resp.json()   # all the data returned by OMS
+    if not 'data' in oms:
+        print(oms)
     return oms['data']
 
 from array import array
