@@ -166,13 +166,19 @@ else:
             chain.AddFile(fName)
 
 ## Constants
-secInDay = 24.*60*60
+#timeUnit = 24.*60*60  ## 1 day
+timeUnit = 1 ## 1 sec
+
 LS_seconds = 2**18 / 11245.5 
-LS_duration = LS_seconds/ secInDay #LS in days
+LS_duration = LS_seconds/ timeUnit #LS in days
 from datetime import datetime
+from datetime import timedelta
 #offset = int(datetime(2023,1,1).timestamp()) - int(datetime(2022,8,31).timestamp())  #since Nov 1, 2022 instead of #since Jan 1, 2023
+#daysSince = datetime(2024,1,31)
 try: ## python3 - reccomended
-    offset = int(datetime(2024,1,1).timestamp()) - int(datetime(2024,1,31).timestamp())  #since Feb 29, 2024
+    offset = int(datetime(2024,1,1).timestamp())  #since Feb 29, 2024
+#    offset = int(datetime(2024,1,1).timestamp())  #since Feb 29, 2024
+#    offset = int(datetime(2024,1,1).timestamp()) - int(daysSince.timestamp())  #since Feb 29, 2024
 except: ## python
     offset = 23850000 ## Mar31, 2023 
     print("Please use 'python3' instead of 'python',")
@@ -189,27 +195,40 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptFit(0)
 
 ## get fill number from the first event
-chain.GetEvent(0)
-firstFill = chain.fill
-firstRun = chain.run
+#chain.GetEvent(0)
+#firstFill = chain.fill
+#firstRun = chain.run
 
-chain.Draw("fill")
+chain.Draw("fill >> tmpFill","","GOFF")
+tmpFill = ROOT.gROOT.Get("tmpFill")
+firstFill, lastFill = tmpFill.GetXaxis().GetXmin(), tmpFill.GetXaxis().GetXmax()
 
-## Skip missing triggers
+chain.Draw("run >> tmpRun","","GOFF")
+tmpRun = ROOT.gROOT.Get("tmpRun")
+firstRun, lastRun = tmpRun.GetXaxis().GetXmin(), tmpRun.GetXaxis().GetXmax()
+
+import fnmatch
+
+branches = [a.GetName() for a in chain.GetListOfLeaves()]
+
+## Skip missing triggers and use wildcards
+triggers_expanded = []
 for entry in [0, chain.GetEntries()-1]: #check only the first and last event
     chain.GetEvent(entry)
     for trigger in triggers[:]:
-        if not hasattr(chain, trigger):
-            triggers.remove(trigger)
+        trigger_matched = fnmatch.filter(branches, trigger) ## expands trigger matching (eg. HLT_IsoMu*)
+        triggers_expanded += [ t for t in trigger_matched if not t in triggers_expanded] ## avoid duplicates
+        if len(trigger_matched)==0:
             print("##### Trigger %s not found in run %d. Removed from the trigger list. #####"%(trigger,chain.run))
         if trigger == "allHLT": 
             triggers += [a.GetName() for a in chain.GetListOfLeaves() if a.GetName()[:4]=="HLT_"]
         if trigger == "allL1": 
             triggers += [a.GetName() for a in chain.GetListOfLeaves() if a.GetName()[:3]=="L1_"]
+triggers = triggers_expanded
 
 
 ## Time varibale
-timeVar = "(time + %f)/%f "%(offset, secInDay)
+timeVar = "(time + %f)/%f "%(offset, timeUnit)
 
 # Loop over selections
 if not os.path.exists(plotsFolder):

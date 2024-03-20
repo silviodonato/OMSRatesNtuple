@@ -31,7 +31,7 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
             minAllowedValue = ys[0]
 #        print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
         print("getCrossSection",histo.GetName(),recLumi.GetName(),minAllowedValue, maxAllowedValue, removeOutliers, len(ys), maxAllowedIdx, minAllowedIdx,  histo.Integral(), recLumi.Integral(), jump)
-    for i in range(len(histo)):
+    for i in range(len(histo)-1):
         val = float(histo[i]) 
         lum = float(recLumi[i])
         if lum>0 and val>=0:
@@ -64,6 +64,15 @@ def getHisto(weight, chain, var, binning, selection, option="GOFF"):
     histo = ROOT.gROOT.Get(hName)
     print ("%s %f"%(histo.GetName(),histo.Integral()))
     assert(type(histo)==ROOT.TH1F)
+    if "time" in var and histo!=None:
+        print(histo)
+        print(histo!=None)
+        print(histo.GetName())
+        timeAxis = histo.GetXaxis()
+        timeAxis.SetTimeDisplay(1)
+        timeAxis.SetTimeFormat(timeAxis.ChooseTimeFormat(timeAxis.GetXmax()-timeAxis.GetXmin()))
+#        timeAxis.SetTimeFormat("%Y-%m-%d %H:%M:%S")
+        timeAxis.SetTimeOffset(0)
     return histo
 
 
@@ -111,7 +120,7 @@ def createFit(histo, initVal,  function = "[0]"):
     return fit
 
 def dropError(histo):
-    for i in range(len(histo)): histo.SetBinError(i, 0)
+    for i in range(len(histo)-1): histo.SetBinError(i, 0)
 
 def addPileUp(canvas, pileup, rightmax, pileupLabel):
     pileup_scaled = pileup.Clone(pileup.GetName()+"_scaled")
