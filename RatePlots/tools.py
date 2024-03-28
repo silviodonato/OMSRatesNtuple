@@ -29,7 +29,7 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
         else:
             maxAllowedValue = ys[0]
             minAllowedValue = ys[0]
-        print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
+        # print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
         print("getCrossSection",histo.GetName(),recLumi.GetName(),minAllowedValue, maxAllowedValue, removeOutliers, len(ys), maxAllowedIdx, minAllowedIdx,  histo.Integral(), recLumi.Integral(), jump)
     for i in range(len(histo)-1):
         val = float(histo[i]) 
