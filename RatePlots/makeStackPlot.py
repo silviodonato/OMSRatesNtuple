@@ -3,11 +3,12 @@
 #Plots done with: python3 trigger_plots.py --rate --xsec --vsTime --vsFill --vsRun --lumisPerBin 30 --inputFile /home/sdonato/CMS/PlotDellaDiscordia/2023_rereco_physics_merged.root --triggers StreamBandwidth_*,Stream_* --selections "Stream23NoFirstFills=cms_ready && beams_stable && beam2_stable && fill>8645 "
 
 #folder = "plots/Stream23NoFirstFills"
+useTimeLabels = True
 folder = "plots/Stream18"
 plotPatterns = ["rates_Stream_", "xsec_Stream_", "rates_StreamBandwidth_", "xsec_StreamBandwidth_"]
 kinds = ["vsFill","vsTime","vsRun"]
-kinds = ["vsFill"]
-plotPatterns = ["rates_Stream_"]
+# kinds = ["vsFill"]
+# plotPatterns = ["rates_Stream_"]
 
 # plotPatterns = ["rates_StreamBandwidth_", "xsec_StreamBandwidth_"]
 # kinds = ["vsFill"]
@@ -97,15 +98,24 @@ def removeEmptyBins(histo, xLabels):
             xs.append(histo.GetBinLowEdge(i))
     xs = xs + [xs[-1]+1]
     newHisto = ROOT.TH1F(histo.GetName()+"_new",histo.GetTitle(),len(bins),0,len(bins))
+    print(histo.GetName())
     for new_i, old_i in enumerate(bins):
         x = xs[new_i]
         new_i = new_i + 1 ## TH1F bins starts from 1
         newHisto.SetBinContent(new_i, histo.GetBinContent(old_i))
-        if len(keys)>0 and x>keys[0]:
-            newHisto.GetXaxis().SetBinLabel(new_i, xLabels[keys[0]])
-            del keys[0]
+        if useTimeLabels:
+            if len(keys)>0 and x>keys[0]:
+                newHisto.GetXaxis().SetBinLabel(new_i, xLabels[keys[0]])
+                print(xLabels[keys[0]], keys[0], x, histo.GetBinContent(old_i))
+                del keys[0]
+            else:
+                newHisto.GetXaxis().SetBinLabel(new_i, "")
         else:
-            newHisto.GetXaxis().SetBinLabel(new_i, "")
+            ## use fill/run/time number every 5 bins
+            if new_i%5 ==0:
+                newHisto.GetXaxis().SetBinLabel(new_i, str(int(x)))           
+            else:
+                newHisto.GetXaxis().SetBinLabel(new_i, "")
     newHisto.GetXaxis().SetTitle("")
     return newHisto
 
@@ -214,7 +224,8 @@ for plotPattern in plotPatterns:
                     else: 
                         if groupHisto.GetNbinsX()!=histo.GetNbinsX():
                             raise Exception("Bins mismatch for %s: %d vs %d. HistoName = %s"%(group, groupHisto.GetNbinsX(), histo.GetNbinsX(), histo.GetName()))
-                    groupHisto.Add(histo)
+                        groupHisto.Add(histo)
+                    #print("Adding %s to %s"%(histo.GetName(), groupHisto.GetName()))
             if groupHisto and groupHisto.Integral()>0: 
                 groupHisto.SetName(groupHisto.GetName()+"_%s"%kind)
                 # print(xLabels)
@@ -250,7 +261,9 @@ for plotPattern in plotPatterns:
         c2.Update()
         
         stack.Draw("HIST")
-        
+        if stack.GetMaximum()==0:
+            print("Stack maximum: %f. for %s. Skipping. "%(stack.GetMaximum(), folder+"_"+plotPattern+"_"+kind))
+            continue
         stack.SetTitle(histo.GetTitle())
         stack.GetXaxis().SetTitle(histo.GetXaxis().GetTitle())
         if "StreamBandwidth" in plotPattern:
@@ -274,7 +287,8 @@ for plotPattern in plotPatterns:
         
         stack.Draw("HIST")
         leg.Draw("same")
-        stack.SetMaximum(stack.GetMaximum()*1.1)
+        average = stack.GetStack().Last().Integral()/stack.GetStack().Last().GetNbinsX()
+        stack.SetMaximum(average*2)
         
         c2.SaveAs(folder+"_"+plotPattern+"_"+kind+".root")
         c2.SaveAs(folder+"_"+plotPattern+"_"+kind+".png")
