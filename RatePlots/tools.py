@@ -14,22 +14,22 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
     if removeOutliers>0: ##compute the quantile of histo/recLumi using only npointsMedian points
         y1 = histo.GetArray()
         y2 = recLumi.GetArray()
-        ys = []
+        ys = [1E-10] ## to keep the same number of bins with rate>0
         npointsMedian = min(npointsMedian,histo.GetNbinsX())
         jump = max(1., float(histo.GetNbinsX())/ npointsMedian)
         for x in range(1, npointsMedian):
             i = int(x*jump)
             if y1[i]>0 and y2[i]>0:
                 ys.append(y1[i]/y2[i])
-        maxAllowedIdx = min(int(len(ys) * (1.0-removeOutliers))-1, len(ys)-2)
-        minAllowedIdx = max(int(len(ys) * (removeOutliers))+1, 0)
+        maxAllowedIdx = min(int(len(ys) * (1.0-removeOutliers)), len(ys)-1)
+        minAllowedIdx = max(int(len(ys) * (removeOutliers)), 0)
         if len(ys)>1:
             maxAllowedValue = sorted(ys)[maxAllowedIdx]
             minAllowedValue = sorted(ys)[minAllowedIdx]
         else:
             maxAllowedValue = ys[0]
             minAllowedValue = ys[0]
-#        print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
+        print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
         print("getCrossSection",histo.GetName(),recLumi.GetName(),minAllowedValue, maxAllowedValue, removeOutliers, len(ys), maxAllowedIdx, minAllowedIdx,  histo.Integral(), recLumi.Integral(), jump)
     for i in range(len(histo)-1):
         val = float(histo[i]) 
