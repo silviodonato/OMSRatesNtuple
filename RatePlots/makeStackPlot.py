@@ -104,7 +104,7 @@ def removeEmptyBins(histo, xLabels):
         new_i = new_i + 1 ## TH1F bins starts from 1
         newHisto.SetBinContent(new_i, histo.GetBinContent(old_i))
         if useTimeLabels:
-            if len(keys)>0 and x>keys[0]:
+            if len(keys)>0 and x>=keys[0] and new_i!=len(bins)-2:
                 newHisto.GetXaxis().SetBinLabel(new_i, xLabels[keys[0]])
                 print(xLabels[keys[0]], keys[0], x, histo.GetBinContent(old_i))
                 del keys[0]
@@ -143,7 +143,7 @@ lumiKeys = list(intLumiLabel)[:] ## exclude last bin
 
 for i, intLumi in enumerate(fillNumber_vsLumi.GetX()):
     if intLumi==0: break ## skip empty bin at the end of the plot
-    matches = [key for key in lumiKeys if (intLumi-key)>=0] ## take the first fill with a lumi greater than the current one
+    matches = [key for key in lumiKeys if (intLumi-key)>0] ## take the first fill with a lumi greater than the current one
     if len(matches)>1: raise Exception("Matches %d"%len(matches))
     if len(matches)==1:
         fillLabel[int(fillNumber_vsLumi.GetY()[i])] = intLumiLabel[matches[0]]
