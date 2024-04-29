@@ -8,10 +8,11 @@ from omsapi import OMSAPI
 appName = "cms-tsg-oms-ntuple"
 appSecret = "" #keep empty to load secret from appSecretLocation
 appSecretLocation = "~/private/oms.sct" #echo "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" > ~/private/oms.sct
+appSecretLocation = ""
 
 def getOMSAPI_krb():
     if verbose: print("Calling  getOMSAPI_krb()")
-    omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
+    omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=False)
     omsapi.auth_krb()
     return omsapi
 

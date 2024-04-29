@@ -131,7 +131,7 @@ else:
         print("#"*100)
         print("Input folder %s not found. Please check your --input option."%inputFolder)
         print("You can download the OMS ntuple from OMS using:")
-        print("xrdcp --recursive root://eosuser.cern.ch//eos/user/s/sdonato/public/OMS_rates/v1.0/  .")
+        print("xrdcp --recursive root://eosuser.cern.ch//eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2023_rereco_physics_merged.root  .")
         print("#"*100)
 
 
