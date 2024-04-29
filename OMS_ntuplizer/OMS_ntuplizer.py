@@ -105,15 +105,17 @@ perRunVariables_float = ["b_field", "energy","energy"]
 
 from datetime import datetime, timedelta
 day_start = datetime.today()-timedelta(days=lastNdays)
+day_end = datetime.today()+timedelta(days=1)
 data_runs = getOMSdata(omsapi, "runs", 
     attributes = ["run_number","recorded_lumi","components","hlt_key","l1_key"]+perRunVariables_int+perRunVariables_float, 
     filters = {
         "run_number":[run_min, run_max], 
         "recorded_lumi":[minimum_integratedLumi, None], 
         "hlt_physics_counter":[minimum_hltevents, None],
-        "end_time":[day_start.isoformat(), "3000-01-01T00:00:00Z"], ## exclude ongoing runs (end_time=None)
+        "end_time":[day_start.isoformat(), day_end.isoformat()], ## exclude ongoing runs (end_time=None)
     }, 
-    max_pages=max_pages
+    max_pages=max_pages,
+    verbose=True
 )
 
 
@@ -421,8 +423,11 @@ for (run, key) in runs:
         data = oms['data']
         for row in data:
             lumi = row['attributes']['last_lumisection_number']
-            Stream_Counters[stream][HLTlumis.index(lumi)] = row['attributes']['n_events']
-            Stream_Bandwidth[stream][HLTlumis.index(lumi)] = row['attributes']['bandwidth']
+            if lumi in HLTlumis:
+                Stream_Counters[stream][HLTlumis.index(lumi)] = row['attributes']['n_events']
+                Stream_Bandwidth[stream][HLTlumis.index(lumi)] = row['attributes']['bandwidth']
+            else:
+                print("Lumi %d not in HLTlumis"%lumi)
         query.attrs(["n_events","bandwidth","last_lumisection_number"]) #
 
     ##check that all streams have the same number of lumisections!
