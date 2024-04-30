@@ -317,7 +317,7 @@ for (run, key) in runs:
     HLTlumis = []
     query.attrs(["counter",'last_lumisection_number']) #
     for HLT_path in reversed(HLTPaths):
-    #    print(HLT_path)
+       # print(HLT_path)
         HLT_Counters[HLT_path] = []
         query.clear_filter()
 
@@ -345,7 +345,8 @@ for (run, key) in runs:
 
     ##check that all triggers have the same number of lumisections!
     for path in HLT_Counters:
-        assert(len(HLT_Counters[path])==len(HLTlumis))
+        if len(HLT_Counters[path])!=len(HLTlumis):
+            print("WARNING. Path: %s. Different lenghts between \nHLTCounter: %s \nHLTLumis:%s"%(path, HLT_Counters[path], HLTlumis))
 
     ############### Get HLT Dataset Rate #########################  
     # Eg. https://cmsoms.cern.ch/agg/api/v1/datasetrates/?filter[dataset_name]=AlCaP0&filter[run_number]=355435
@@ -389,7 +390,7 @@ for (run, key) in runs:
 #    ##check that all datasets have the same number of lumisections!
 #    for dataset in Dataset_Counters:
 #        assert(len(Dataset_Counters[dataset])==len(Datasetlumis))
-    print(dataset, Dataset_Counters[dataset])
+    #print(dataset, Dataset_Counters[dataset])
 
     ############### Get HLT Stream Rate #########################  
     # Eg. https://cmsoms.cern.ch/agg/api/v1/streams/?&filter[run_number][EQ]=355435&page[offset]=0&page[limit]=10000&group[granularity]=lumisection&filter[stream_name]=RPCMON
@@ -590,4 +591,5 @@ for (run, key) in runs:
     print("Closing ",f.GetName())
     f.Write()
     f.Close()
-
+ 
+ 
