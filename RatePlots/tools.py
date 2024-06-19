@@ -22,7 +22,9 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
             if y1[i]>0 and y2[i]>0:
                 ys.append(y1[i]/y2[i])
         maxAllowedIdx = min(int(len(ys) * (1.0-removeOutliers)), len(ys)-1)
-        minAllowedIdx = max(int(len(ys) * (removeOutliers)), 0)
+        # minAllowedIdx = max(int(len(ys) * (removeOutliers)), 0)
+
+        minAllowedIdx = 0 ## do not apply the lower cut
         if len(ys)>1:
             maxAllowedValue = sorted(ys)[maxAllowedIdx]
             minAllowedValue = sorted(ys)[minAllowedIdx]
@@ -50,8 +52,9 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
             if lum<0: print("getCrossSection: lum<0 in %s bin %d"%(recLumi.GetName(), i))
             if val<0: print("getCrossSection: val<0 in %s bin %d"%(histo.GetName(), i))
 #            print(i,val,lum)
-        nhisto.SetMaximum(maxAllowedValue*1.05*scale)
-        nhisto.SetMinimum(minAllowedValue)
+    nhisto.SetMaximum(maxAllowedValue*1.05*scale)
+    nhisto.SetMinimum(minAllowedValue)
+    print("minAllowedValue=",minAllowedValue)
     print("getCrossSection STOP", nhisto.GetMaximum(), nhisto.GetMinimum())
     return nhisto
 
@@ -238,4 +241,38 @@ def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, p
     command += "--lumisPerBin %s "%lumisPerBin
     command += "--nbins %s "%nbins
     command += "--selections %s "%selection
-    out_.write
+    out_.write(command)
+    out_.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
