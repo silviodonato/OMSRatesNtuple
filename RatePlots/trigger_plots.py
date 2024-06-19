@@ -267,6 +267,9 @@ for selFolder in selections:
     if collisions:
         pileup_vsTime = getHisto("pileup", chain, timeVar, binning, selection, deadtimeCorrection=False) ##co
         delLumi_vsTime = getHisto("delivered_lumi_per_lumisection", chain, timeVar, binning, selection, deadtimeCorrection=False) #pb-1 * 1E33 = 1 cm-2
+        ## loop on bin and set bin error to zero
+        for i in range(delLumi_vsTime.GetNbinsX()):
+            delLumi_vsTime.SetBinError(i+1,0) 
     print("get common histograms: DONE")
 
     ## take the average value per bin, instead of the sum, for non-cumulative variables
@@ -442,7 +445,10 @@ for selFolder in selections:
 #                    print("scaled")
                 elif collisions:  ## get cross sections [events/recolumi]
                     xsec_vs = getCrossSection(histos_vs,delLumi_vs,1, removeOutliers)
+                    max_, min_ = xsec_vs.GetMaximum(), xsec_vs.GetMinimum()
                     xsec_vs.Scale(refLumi/1E36)# pb -> cm^2 -> rates at 2E34 cm-2s-1
+                    xsec_vs.SetMaximum(max_*refLumi/1E36)
+                    xsec_vs.SetMinimum(min_*refLumi/1E36)
 
                 if not useRate and not skipFit:
                     fit = createFit(xsec_vs, xsec_vs.Integral()/count_vs.Integral())
@@ -469,6 +475,7 @@ for selFolder in selections:
                     else:
                         xsec_vs.GetYaxis().SetTitle(xsecLabel)
                     xsec_vs.GetYaxis().SetRangeUser(xsec_vs.GetMinimum(),xsec_vs.GetMaximum())
+                    print("Y-range: %f - %f"%(xsec_vs.GetMaximum(),xsec_vs.GetMinimum()))
                     xsec_vs.Draw("e1")
             #        puScaleMin = xsec_vs.GetMinimum()/xsec_vs.GetMaximum()*puScaleMax
                     if collisions:
@@ -546,4 +553,3 @@ for selFolder in selections:
                     leg.Draw()
                     outputFile = outFolderWithTrigger+"/"+prefix+trigger+"_vsPU.root"
                     canv.SaveAs(outputFile)
- 

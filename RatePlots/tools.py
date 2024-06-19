@@ -1,19 +1,21 @@
 import ROOT
 
-def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
+def getCrossSection(histo, delLumi, scale=1, removeOutliers=0.98):
+    if removeOutliers>0.5:
+        raise Exception("removeOutliers cannot be larger than 0.5. %f"%removeOutliers)
     print("getCrossSection START")
-    print(histo, recLumi, scale, removeOutliers)
+    print(histo, delLumi, scale, removeOutliers)
     npointsMedian = 10000000
     average = 0
     count = 0
-    nhisto = histo.Clone(histo.GetName()+recLumi.GetName())
+    nhisto = histo.Clone(histo.GetName()+delLumi.GetName())
     if histo.Integral() == 0: raise Exception("getCrossSection: %s is empty"%histo.GetName())
-    if recLumi.Integral() == 0: raise Exception("getCrossSection: %s is empty"%recLumi.GetName())
+    if delLumi.Integral() == 0: raise Exception("getCrossSection: %s is empty"%delLumi.GetName())
     maxAllowedValue = histo.GetMaximum()
     minAllowedValue = histo.GetMinimum()
-    if removeOutliers>0: ##compute the quantile of histo/recLumi using only npointsMedian points
+    if removeOutliers>0: ##compute the quantile of histo/delLumi using only npointsMedian points
         y1 = histo.GetArray()
-        y2 = recLumi.GetArray()
+        y2 = delLumi.GetArray()
         ys = [1E-10] ## to keep the same number of bins with rate>0
         npointsMedian = min(npointsMedian,histo.GetNbinsX())
         jump = max(1., float(histo.GetNbinsX())/ npointsMedian)
@@ -22,9 +24,8 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
             if y1[i]>0 and y2[i]>0:
                 ys.append(y1[i]/y2[i])
         maxAllowedIdx = min(int(len(ys) * (1.0-removeOutliers)), len(ys)-1)
-        # minAllowedIdx = max(int(len(ys) * (removeOutliers)), 0)
-
-        minAllowedIdx = 0 ## do not apply the lower cut
+        minAllowedIdx = max(int(len(ys) * (removeOutliers)), 0)
+#        minAllowedIdx = 0 ## do not apply the lower cut
         if len(ys)>1:
             maxAllowedValue = sorted(ys)[maxAllowedIdx]
             minAllowedValue = sorted(ys)[minAllowedIdx]
@@ -32,31 +33,33 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
             maxAllowedValue = ys[0]
             minAllowedValue = ys[0]
         # print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
-        print("getCrossSection",histo.GetName(),recLumi.GetName(),minAllowedValue, maxAllowedValue, removeOutliers, len(ys), maxAllowedIdx, minAllowedIdx,  histo.Integral(), recLumi.Integral(), jump)
+        print("getCrossSection",histo.GetName(),delLumi.GetName(),minAllowedValue, maxAllowedValue, removeOutliers, len(ys), maxAllowedIdx, minAllowedIdx,  histo.Integral(), delLumi.Integral(), jump)
     for i in range(len(histo)-1):
-        val = float(histo[i]) 
-        lum = float(recLumi[i])
-        if lum>0 and val>=0:
-            nhisto.SetBinContent(i, val/lum*scale)
-            nhisto.SetBinError(i, val**0.5/lum*scale)
-            if removeOutliers>0:
-                if val/lum>maxAllowedValue: 
-                    nhisto.SetBinContent(i, maxAllowedValue*scale)
-                    nhisto.SetBinError(i, 0) ## to avoid huge errors from crazy rates
-                elif val/lum<minAllowedValue: 
-                    nhisto.SetBinContent(i, minAllowedValue*scale)
-                    nhisto.SetBinError(i, 0) ## to avoid huge errors from crazy rates
-        else:
-            nhisto.SetBinContent(i, 0)
-            nhisto.SetBinError(i, 0)
-            if lum<0: print("getCrossSection: lum<0 in %s bin %d"%(recLumi.GetName(), i))
-            if val<0: print("getCrossSection: val<0 in %s bin %d"%(histo.GetName(), i))
-#            print(i,val,lum)
-    nhisto.SetMaximum(maxAllowedValue*1.05*scale)
-    nhisto.SetMinimum(minAllowedValue)
-    print("minAllowedValue=",minAllowedValue)
+         val = float(histo[i]) 
+         lum = float(delLumi[i])
+         if lum>0 and val>=0:
+             nhisto.SetBinContent(i, val/lum*scale)
+             nhisto.SetBinError(i, val**0.5/lum*scale)
+             ## Do not remove outliers (simply change zoom along axis)
+             # if removeOutliers>0:
+             #     if val/lum>maxAllowedValue: 
+             #         nhisto.SetBinContent(i, maxAllowedValue*scale)
+             #         nhisto.SetBinError(i, 0) ## to avoid huge errors from crazy rates
+             #     elif val/lum<minAllowedValue: 
+             #         nhisto.SetBinContent(i, minAllowedValue*scale)
+             #         nhisto.SetBinError(i, 0) ## to avoid huge errors from crazy rates 
+         else:
+             nhisto.SetBinContent(i, 0)
+             nhisto.SetBinError(i, 0)
+             if lum<0: print("getCrossSection: lum<0 in %s bin %d"%(delLumi.GetName(), i))
+             if val<0: print("getCrossSection: val<0 in %s bin %d"%(histo.GetName(), i))
+#             print(i,val,lum)
+     # nhisto.SetMaximum(maxAllowedValue*1.05*scale) 
+    nhisto.SetMaximum(maxAllowedValue*scale)
+    nhisto.SetMinimum(minAllowedValue*scale)
+    print("minAllowedValue=",minAllowedValue, "maxAllowedValue=",maxAllowedValue*scale, "removeOutliers=",removeOutliers)
     print("getCrossSection STOP", nhisto.GetMaximum(), nhisto.GetMinimum())
-    return nhisto
+    return nhisto 
 
 import copy
 def getHisto(weight, chain, var, binning, selection, deadtimeCorrection, option="GOFF"):
@@ -243,36 +246,4 @@ def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, p
     command += "--selections %s "%selection
     out_.write(command)
     out_.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
