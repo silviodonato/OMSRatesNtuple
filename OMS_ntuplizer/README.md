@@ -1,23 +1,40 @@
-## OMS ntuplizer
-This code downloads the trigger rates from OMS using OMS API (https://gitlab.cern.ch/cmsoms/oms-api-client) and makes flat ntuples (TTree) which include the number of events accepted by each L1 and HLT trigger per lumisection and other use full infos (eg. luminosity, pileup, number of fill, DCS detector bits, ...). All the variables are stored per lumisection (23.31 s).
-This code was originally designed in TSG group to allow people performing trigger studies (eg. plots of trigger cross-section vs integrated luminosity) but it can be even used/extended to other purposes.
+## OMS Ntuplizer
 
-### Install OMS_ntuplizer and OMS API
-- Get OMSRatesNtuple following https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md.
+This code downloads trigger rates from the OMS using the [OMS API](https://gitlab.cern.ch/cmsoms/oms-api-client) and creates flat ntuples (TTree). These ntuples include the number of events accepted by each L1 and HLT trigger per lumisection, along with other useful information (e.g., luminosity, pileup, number of fills, DCS detector bits, etc.). All variables are stored per lumisection (23.31 seconds).
 
-- Install OMS API client following the README in https://gitlab.cern.ch/cmsoms/oms-api-client. \
-Please note that OMS API client should be installed in a separated folder. \
-You might need to download the CERN cookies from lxplus \
-```cern-get-sso-cookie -u https://cmsoms.cern.ch/cms/fills/summary -o ssocookies.txt```.
+Originally designed by the TSG group, this tool facilitates trigger studies (e.g., plotting trigger cross-sections vs. integrated luminosity) but can be extended for other purposes as well.
 
-- Go in the `OMSRatesNtuple/OMS_ntuplizer` folder and test the correct installation of OMS API using `python3 OMSAPI_test.py`.  \
-If you get any error, please check your OMS API installation.
+### Installing OMS_ntuplizer and OMS API
 
-### Run OMS ntuplizer
+1. **Clone OMSRatesNtuple**
+   - Follow the instructions [here](https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md).
 
-- Edit the parameters in `OMS_ntuplizer.py` (eg. select a different `outputFolder`, default is `.`).
+2. **Install the OMS API Client**
+   - Follow the README instructions at [OMS API Client](https://gitlab.cern.ch/cmsoms/oms-api-client).
+   - Install the OMS API client in a separate folder.
+   - Download CERN cookies from lxplus using (not mandatory):
+     ```sh
+     cern-get-sso-cookie -u https://cmsoms.cern.ch/cms/fills/summary -o ssocookies.txt
+     ```
 
-- Run `python3 OMS_ntuplizer.py`.
+3. **Test the OMS API Installation**
+   - Navigate to the `OMSRatesNtuple/OMS_ntuplizer` folder.
+   - Test the OMS API installation:
+     ```sh
+     python3 OMSAPI_test.py
+     ```
+   - If you encounter any errors, check your OMS API installation.
 
-- Check the nutuples produced in your outputFolder :-)
+### Running OMS Ntuplizer
 
+1. **Edit Parameters**
+   - Modify the parameters in `OMS_ntuplizer.py` (e.g., select a different `outputFolder`).
+
+2. **Run the Ntuplizer**
+   - Execute the following command:
+     ```sh
+     python3 OMS_ntuplizer.py
+     ```
+
+3. **Check the Output**
+   - Verify the ntuples produced in your specified `outputFolder` :-).
