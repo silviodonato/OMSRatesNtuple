@@ -51,14 +51,16 @@ def getCrossSection(histo, recLumi, scale=1, removeOutliers=0.98):
             if val<0: print("getCrossSection: val<0 in %s bin %d"%(histo.GetName(), i))
 #            print(i,val,lum)
         nhisto.SetMaximum(maxAllowedValue*1.05*scale)
-        nhisto.SetMinimum(minAllowedValue*0.5*scale)
+        nhisto.SetMinimum(minAllowedValue)
     print("getCrossSection STOP", nhisto.GetMaximum(), nhisto.GetMinimum())
     return nhisto
 
 import copy
-def getHisto(weight, chain, var, binning, selection, option="GOFF"):
+def getHisto(weight, chain, var, binning, selection, deadtimeCorrection, option="GOFF"):
     hName = "hist_"+weight+selection
     hName = ''.join([l for l in hName if (l.isalpha() or l.isnumeric()) ])
+    if deadtimeCorrection: 
+        weight = "(%s)*deadtime"%weight ## IMPORTANT: deadtime is bugged. It is actually (1-deadtime)!
     print ("Calling chain.Draw: with",("%s >> %s%s"%(var,hName,binning),"%s*(%s)"%(weight,selection),option))
     chain.Draw("%s >> %s"%(var,hName) + binning,"%s*(%s)"%(weight,selection),option)
     histo = ROOT.gROOT.Get(hName)
@@ -77,7 +79,7 @@ def getHisto(weight, chain, var, binning, selection, option="GOFF"):
 
 
 def getBinning(chain, var, selection,bin_size):
-    tmp =  getHisto("1", chain, var, "", selection)
+    tmp =  getHisto("1", chain, var, "", selection, False)
     timemax = tmp.GetXaxis().GetXmax()
     timemin = tmp.GetXaxis().GetXmin()
     ntimebins =  int((timemax-timemin)/bin_size)
@@ -86,7 +88,7 @@ def getBinning(chain, var, selection,bin_size):
     return ntimebins, timemin, timemax
 
 def getBinningFromMax(chain, var, selection, LS_duration, nbins):
-    tmp =  getHisto("1", chain, var, "", selection)
+    tmp =  getHisto("1", chain, var, "", selection, False)
     timemax = tmp.GetXaxis().GetXmax()
     timemin = tmp.GetXaxis().GetXmin()
     bin_size =  int((timemax-timemin)/nbins/LS_duration)*LS_duration
@@ -202,6 +204,7 @@ def readOptions(args, triggers, selections):
             selections[direct] = sel
     collisions = not args.cosmics
     batch = not args.nobatch
+    deadtimeCorrection = not args.postDeadtime
     testing = args.testing
     refLumi = float(args.refLumi)
     lumisPerBin = int(args.lumisPerBin)
@@ -214,15 +217,15 @@ def readOptions(args, triggers, selections):
         print ("Using default inputFile = %s"%inputFile)
     if inputFolder and inputFile:  raise Exception("You cannot --input and --inputFolder at the same time.")
     print(args)
-    return useRates, vses, triggers, inputFolder, inputFile, plotFolder, removeOutliers, runMin, runMax, collisions, batch, testing, lumisPerBin, refLumi, selections, nbins
+    return useRates, vses, triggers, inputFolder, inputFile, plotFolder, removeOutliers, runMin, runMax, collisions, batch, deadtimeCorrection, testing, lumisPerBin, refLumi, selections, nbins
 
-
-def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, plotsFolder, removeOutliers, runMin, runMax, collisions, batch, testing, lumisPerBin, refLumi, selection, nbins):
+def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, plotsFolder, removeOutliers, runMin, runMax, collisions, batch, deadtimeCorrection, testing, lumisPerBin, refLumi, selection, nbins):
     out_ = open(outputFile, 'w')
     command = "python3 %s "%(filePath)
     if useRate: command += "--rates "
     else: command += "--xsect "
     if not collisions: command += "--cosmics "
+    if not deadtimeCorrection: command += "--postDeadtime "
     command += "--%s "%vs
     command += "--triggers %s "%trigger
     if len(inputFolder)>0: command += "--input %s "%inputFolder
@@ -231,9 +234,8 @@ def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, p
     command += "--runMin %s "%runMin
     command += "--runMax %s "%runMax
     command += "--refLumi %s "%refLumi
+    command += "--removeOutliers %s "%removeOutliers
     command += "--lumisPerBin %s "%lumisPerBin
     command += "--nbins %s "%nbins
     command += "--selections %s "%selection
-    out_.write(command)
-    out_.close()
-
+    out_.write                                     
