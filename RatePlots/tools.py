@@ -238,4 +238,4 @@ def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, p
     command += "--lumisPerBin %s "%lumisPerBin
     command += "--nbins %s "%nbins
     command += "--selections %s "%selection
-    out_.write                                     
+    out_.write
