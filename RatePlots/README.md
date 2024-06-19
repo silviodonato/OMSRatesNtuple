@@ -1,60 +1,69 @@
-## Rateplots
-This script produce trigger rate plots from the OMS ntuples, which are currently stored in `/eos/cms/store/group/dpg_trigger/comm_trigger/TriggerStudiesGroup/OMSRatesNtuple/` (accessible outside cern using `root://eoscms.cern.ch//eos/cms/...` and at https://sdonato.web.cern.ch/sdonato/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer). The OMS ntuples were produced using https://github.com/silviodonato/OMSRatesNtuple/tree/main/OMS_ntuplizer. 
+## RatePlots
 
-As the size of the OMS nuples in `/eos/user/s/sdonato/public/OMS_rates/v2.0/` is less than 2 GB, it might be convenient to copy it locally.
-The folder contains also some other merged ntuples (eg. goldejson_skim.root, physics_merged.root).
+This script produces trigger rate plots from OMS ntuples, which are currently stored in `/eos/user/s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/` (eg. [2024_physics_merged.root](https://sdonato.web.cern.ch/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2024_physics_merged.root), see [OMSRatesNtuple](https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md) for more info). These ntuples were generated using [OMS_ntuplizer](https://github.com/silviodonato/OMSRatesNtuple/tree/main/OMS_ntuplizer). 
+
+As the size of the OMS ntuples is less than 2 GB, it might be convenient to copy them locally.
 
 ### Installation of RatePlots
+Prerequisite: test that ROOT and python3 are correctly installed: `python3 -c "import ROOT"`.
+You should not get any error. 
 
-#### Method 1: Link to an existing copy of RatePlots (quickest method)
-```
-mkdir RatePlots
-cd RatePlots
-ln -s /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*.py .
+#### Method 1: Use an Existing Copy of RatePlots (Quickest Method from Lxplus)
+```sh
+ln -s /eos/user/s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py .
 python3 trigger_plots.py --help
 ```
-Note that you can even use directly the remote file:
-```
-python3 /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --help
+Note that you can even use the remote file directly:
+```sh
+python3 /eos/user/s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --help
 ```
 
-#### Method 2: Get RatePlots from GitHub (recommended)
-- Get OMSRatesNtuple following https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md and the:
-```
+#### Method 2: Get RatePlots from GitHub (Recommended)
+- Follow the instructions [here](https://github.com/silviodonato/OMSRatesNtuple/blob/main/README.md) to get OMSRatesNtuple, then:
+```sh
 cd RatePlots
 python3 trigger_plots.py --help
 ```
 
 #### Method 3: Copy RatePlots from lxplus (if you don't have a GitHub account)
 - Copy RatePlots from an existing folder:
-```
-mkdir RatePlots
-cd RatePlots
-cp /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/RatePlots/*py
+```sh
+wget https://github.com/silviodonato/OMSRatesNtuple/archive/refs/heads/main.zip 
+unzip  main.zip
+cd OMSRatesNtuple-main/RatePlots/
 python3 trigger_plots.py --help
 ```
 
-### Run Rateplots
-- Check some parameters in `python3 trigger_plots.py --help`. You can find some example in doAll.sh.
-- Run `python3 trigger_plots.py` (example: `python3 trigger_plots.py --xsect --vsPU --vsIntLumi --lumisPerBin 30 --inputFile
-root://eoscms.cern.ch//eos/cms/store/group/dpg_trigger/comm_trigger/TriggerStudiesGroup/OMSRatesNtuple/2023/physics_merged.root --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v --selections "PU50_60=cms_ready && beams_stable && beam2_stable
-&& pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable"`)
-- Check the new plots in `plots` :-).
+### Running RatePlots
 
-### Parameter description
-```
+1. **Check Parameters**
+   - Review available parameters using:
+     ```sh
+     python3 trigger_plots.py --help
+     ```
+
+2. **Run the Script**
+   - Example command:
+     ```sh
+     python3 /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2024_physics_merged.root --output plots/   --selections "2024_physics_allHLT"="fill>9517&&recorded_lumi>0.2" 
+     ```
+
+3. **Check the Output**
+   - Review the generated plots in the `plots` directory.
+
+### Parameter Description
+To understand all available options and their descriptions, run:
+```sh
 python3 trigger_plots.py --help
 ```
 
 ```
 usage: trigger_plots.py [-h] [--cosmics] [--rates] [--xsect] [--vsFill] [--vsRun] [--vsPU] [--vsIntLumi] [--vsTime] [--runMin RUNMIN] [--runMax RUNMAX] [--triggers TRIGGERS] [--selections SELECTIONS]
-                        [--input INPUT] [--inputFile INPUTFILE] [--output OUTPUT] [--refLumi REFLUMI] [--lumisPerBin LUMISPERBIN] [--nbins NBINS] [--removeOutliers REMOVEOUTLIERS] [--nobatch]
+                        [--input INPUT] [--inputFile INPUTFILE] [--output OUTPUT] [--refLumi REFLUMI] [--lumisPerBin LUMISPERBIN] [--nbins NBINS] [--removeOutliers REMOVEOUTLIERS] [--nobatch] [--postDeadtime]
                         [--testing]
 
-https://github.com/silviodonato/OMSRatesNtuple. Example: python3 trigger_plots.py --rates --xsect --vsFill --vsPU --vsIntLumi --vsTime --lumisPerBin 30 --inputFile
-/afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v --selections "PU50_60=cms_ready && beams_stable && beam2_stable
-&& pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable" Example cosmics: python3 trigger_plots.py --rates --vsRun --vsFill --vsTime --lumisPerBin 30 --input
-/afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2023/ --triggers HLT_L1SingleMuOpen_v --selections "cosmics=1" --cosmics
+https://github.com/silviodonato/OMSRatesNtuple. Example: python3 trigger_plots.py --rates --xsect --vsFill --vsPU --vsIntLumi --vsTime --lumisPerBin 30 --inputFile /afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root --triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v --selections "PU50_60=cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable"
+Example for cosmics: python3 trigger_plots.py --rates --vsRun --vsFill --vsTime --lumisPerBin 30 --input /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2023/ --triggers HLT_L1SingleMuOpen_v --selections "cosmics=1" --cosmics
 
 options:
   -h, --help            show this help message and exit
@@ -83,9 +92,10 @@ options:
   --removeOutliers REMOVEOUTLIERS
                         Percentile of data points that will excluded from the plots. This is necessary to remove the rates spikes from the plots. (default: 0.01)
   --nobatch             Disable ROOT batch mode (default: False)
+  --postDeadtime        Do not apply deadtime correction (ie. get post-DT rates) (default: False)
   --testing             Used for debugging/development (default: False)
 ```
 
-### Plots
+### Accessing Plots
 
-- The plots obtained centrally are available at https://sdonato.web.cern.ch/OMSRatesNtuple
+The centrally generated plots are available at [2024_physics_allHLT]([https://sdonato.web.cern.ch/OMSRatesNtuple](https://sdonato.web.cern.ch/OMSRatesNtuple/OMSRatesNtuple/RatePlots/plots/2024_physics_allHLT/)).
