@@ -61,16 +61,10 @@ import argparse
 parser = argparse.ArgumentParser( 
     description='''https://github.com/silviodonato/OMSRatesNtuple. 
 Example:
-python3 trigger_plots.py \
---rates --xsect \
---vsFill --vsPU --vsIntLumi --vsTime \
---lumisPerBin 30 \
---inputFile /afs/cern.ch/work/s/sdonato/public/OMS_ntuples/v2.0/goldejson_skim.root \
---triggers L1_DoubleEG_LooseIso25_LooseIso12_er1p5,HLT_IsoMu24_v \
---selections "PU50_60=cms_ready && beams_stable && beam2_stable && pileup>50 && pileup<60,inclusive=cms_ready && beams_stable && beam2_stable"
+python3 trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2024_physics_merged.root --output plots/   --selections "2024_physics_allHLT"="fill>9517&&recorded_lumi_per_lumisection>0.2"
 
 Example cosmics:
-python3 trigger_plots.py --rates  --vsRun --vsFill --vsTime --lumisPerBin 30 --input /afs/cern.ch/work/s/sdonato/public/website/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/2023/ --triggers HLT_L1SingleMuOpen_v --selections "cosmics=1" --cosmics
+python3 trigger_plots.py --rates  --vsRun --vsFill --vsTime  --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2024_CRAFT_merged.root --triggers HLT_L1SingleMuOpen_v --selections "cosmics=1" --cosmics
 ''', 
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
