@@ -27,3 +27,6 @@ git clone git@github.com:silviodonato/OMSRatesNtuple.git
 Next, follow the instructions provided in the README files for each specific tool:
 - [OMS_ntuplizer README](https://github.com/silviodonato/OMSRatesNtuple/blob/main/OMS_ntuplizer/README.md)
 - [RatePlots README](https://github.com/silviodonato/OMSRatesNtuple/blob/main/RatePlots/README.md)
+
+### Support:
+Mattermost channel: https://mattermost.web.cern.ch/cms-tsg/channels/omsratesntuple
