@@ -38,3 +38,7 @@ Originally designed by the TSG group, this tool facilitates trigger studies (e.g
 
 3. **Check the Output**
    - Verify the ntuples produced in your specified `outputFolder` :-).
+
+
+### Support:
+Mattermost channel: https://mattermost.web.cern.ch/cms-tsg/channels/omsratesntuple

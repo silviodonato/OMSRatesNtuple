@@ -99,3 +99,7 @@ options:
 ### Accessing Plots
 
 The centrally generated plots are available at [2024_physics_allHLT]([https://sdonato.web.cern.ch/OMSRatesNtuple](https://sdonato.web.cern.ch/OMSRatesNtuple/OMSRatesNtuple/RatePlots/plots/2024_physics_allHLT/)).
+
+
+### Support:
+Mattermost channel: https://mattermost.web.cern.ch/cms-tsg/channels/omsratesntuple
