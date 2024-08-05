@@ -365,7 +365,7 @@ for selFolder in selections:
     histos_vsRun = {}
     from tools import setStyle, getCrossSection, createFit, addPileUp, getPlotVsNewVar, saveSh
     from style import title_vsTime, xsecLabel, puColor, createLegend,pileupLabel,ratesLabel,fillLabel,runLabel,legStyle,getColor
-    if deadtimeCorrection:
+    if deadtimeCorrection or "L1_" in trigger: ##L1 bits are already pre-DT
         ratesLabel = ratesLabel + " (pre-DT)"
         xsecLabel = xsecLabel + " (pre-DT)"
     else:
@@ -377,7 +377,7 @@ for selFolder in selections:
         outFolderWithTrigger = "%s/%s"%(outFolder, trigger)
         if not os.path.exists(outFolderWithTrigger):
             os.mkdir(outFolderWithTrigger)
-        histos_vsTime = getHisto("%s"%trigger, chain, timeVar, binning, selection, deadtimeCorrection) #Alt$(%s,1) ?
+        histos_vsTime = getHisto("%s"%trigger, chain, timeVar, binning, selection, deadtimeCorrection if not "L1_" in trigger else False) ##L1 bits are already pre-DT
         histos_vsFill = getHistoVsFillNumber(histos_vsTime, fillNumber_vsTime)
         histos_vsRun = getHistoVsFillNumber(histos_vsTime, runNumber_vsTime)
         setStyle(histos_vsTime, getColor(i))
