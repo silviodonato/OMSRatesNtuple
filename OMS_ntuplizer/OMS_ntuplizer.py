@@ -436,7 +436,7 @@ for (run, key) in runs:
 #        assert(len(Stream_Bandwidth[stream])==len(HLTlumis))
 #        assert(len(Stream_Counters[stream])==len(HLTlumis))
     
-    print(stream, Stream_Counters[stream], Stream_Bandwidth[stream])
+    if len(streams)>0: print(stream, Stream_Counters[stream], Stream_Bandwidth[stream])
     
     
     #################################################################
