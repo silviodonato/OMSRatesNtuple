@@ -547,3 +547,5 @@ for selFolder in selections:
                     leg.Draw()
                     outputFile = outFolderWithTrigger+"/"+prefix+trigger+"_vsPU.root"
                     canv.SaveAs(outputFile)
+                    canv.SaveAs(outputFile.replace(".root",".png"))
+
