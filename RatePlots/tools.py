@@ -66,7 +66,7 @@ def getHisto(weight, chain, var, binning, selection, deadtimeCorrection, option=
     hName = "hist_"+weight+selection
     hName = ''.join([l for l in hName if (l.isalpha() or l.isnumeric()) ])
     if deadtimeCorrection: 
-        weight = "(%s)*deadtime"%weight ## IMPORTANT: deadtime is bugged. It is actually (1-deadtime)!
+        weight = "(%s)/deadtime"%weight ## IMPORTANT: deadtime is bugged. It is actually (1-deadtime)!
     print ("Calling chain.Draw: with",("%s >> %s%s"%(var,hName,binning),"%s*(%s)"%(weight,selection),option))
     chain.Draw("%s >> %s"%(var,hName) + binning,"%s*(%s)"%(weight,selection),option)
     histo = ROOT.gROOT.Get(hName)
