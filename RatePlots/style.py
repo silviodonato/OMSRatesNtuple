@@ -19,6 +19,10 @@ maxY=-1
 fillNumberMargin = 5
 
 
+### Text for "updated" label
+text_x, text_y, text_size, text_content = 0.01, 0.01, 0.02,  "Updated to run=%d (fill=%d)"
+
+
 #def createLegend(xmin=0.18, ymin=0.15, xmax=0.82, ymax=0.25):
 def createLegend(xmin=0.16, ymin=0.88, xmax=0.87, ymax=0.98):
     leg = TLegend(xmin,ymin,xmax,ymax)

@@ -196,13 +196,13 @@ ROOT.gStyle.SetOptFit(0)
 #firstFill = chain.fill
 #firstRun = chain.run
 
-chain.Draw("fill >> tmpFill","","GOFF")
+chain.Draw("fill >> tmpFill(20000,0,20000)","","GOFF")
 tmpFill = ROOT.gROOT.Get("tmpFill")
-firstFill, lastFill = tmpFill.GetXaxis().GetXmin(), tmpFill.GetXaxis().GetXmax()
+firstFill, lastFill_ = tmpFill.GetXaxis().GetBinCenter(tmpFill.FindFirstBinAbove(0)), tmpFill.GetXaxis().GetBinCenter(tmpFill.FindLastBinAbove(0))
 
-chain.Draw("run >> tmpRun","","GOFF")
+chain.Draw("run >> tmpRun(500000,0,500000)","","GOFF")
 tmpRun = ROOT.gROOT.Get("tmpRun")
-firstRun, lastRun = tmpRun.GetXaxis().GetXmin(), tmpRun.GetXaxis().GetXmax()
+firstRun, lastRun = tmpRun.GetXaxis().GetBinCenter(tmpRun.FindFirstBinAbove(0)), tmpRun.GetXaxis().GetBinCenter(tmpRun.FindLastBinAbove(0))
 
 import fnmatch
 
@@ -301,12 +301,17 @@ for selFolder in selections:
         dropError(pileup_vsRun)
     
     # init canvas
-    from style import res_X,res_Y, gridX, gridY
+    from style import res_X,res_Y, gridX, gridY, text_x, text_y, text_size, text_content
+    text_content = text_content%(lastRun, lastFill_)
     canv = ROOT.TCanvas("canv","",res_X,res_Y)
     canv.UseCurrentStyle()
     canv.SetGridx(gridX)
     canv.SetGridy(gridY)
-    
+    canv.cd()
+
+    lastFill_text = ROOT.TLatex()
+    lastFill_text.SetTextSize(text_size)
+
     from style import title_vsLumi,intLumiLabel,timeLabel
     if collisions:
         intLumiLabel = intLumiLabel%firstFill ## replace %s with the actual first fill number 
@@ -315,6 +320,7 @@ for selFolder in selections:
         intLumi_vsTime.GetXaxis().SetTitle(timeLabel)
         intLumi_vsTime.GetYaxis().SetTitle(intLumiLabel)
         intLumi_vsTime.Draw("HIST")
+        lastFill_text.DrawLatexNDC(text_x, text_y,text_content)
         canv.Update()
         canv.Modify()
         
@@ -349,17 +355,23 @@ for selFolder in selections:
             plotNumber_vsLumi.SetMinimum(firstNumber-fillNumberMargin)
             plotNumber_vsLumi.SetMaximum(plotNumber_vsTime.GetMaximum()+fillNumberMargin)
             plotNumber_vsLumi.Draw("AP")
+            lastFill_text.DrawLatexNDC(text_x, text_y,text_content)
+            ##Add text in the upper left corner with writen "Last Run = %s"%lastRun
+
             canv.SaveAs(outFolder+"/A%sNumber_vsLumi.root"%var)
             canv.SaveAs(outFolder+"/A%sNumber_vsLumi.png"%var)
             del plotNumber_vsLumi
     del canv 
     
     ## re-init canvas
-    from style import res_X,res_Y, gridX, gridY
+    from style import res_X,res_Y, gridX, gridY, text_x, text_y, text_size, text_content
+    text_content = text_content%(lastRun, lastFill_)
     canv = ROOT.TCanvas("canv","",res_X,res_Y)
     canv.SetGridx(gridX)
     canv.SetGridy(gridY)
-    
+    lastFill_text = ROOT.TLatex()
+    lastFill_text.SetTextSize(text_size)
+
     histos_vsTime = {}
     histos_vsFill = {}
     histos_vsRun = {}
@@ -485,6 +497,7 @@ for selFolder in selections:
                         leg.AddEntry(pileup_vs_scaled,"pileup","p")
                     leg.AddEntry(xsec_vs,trigger,legStyle)
                     leg.Draw()
+                    lastFill_text.DrawLatexNDC(text_x, text_y,text_content)
                     outputFile = outFolderWithTrigger+"/"+prefix+trigger+"_"+vs+".root"
                     canv.SaveAs(outputFile)
                     canv.SaveAs(outputFile.replace(".root",".png"))
@@ -519,6 +532,7 @@ for selFolder in selections:
                         leg.AddEntry(pileup_vs_scaled,"pileup","p")
                     leg.AddEntry(xsec_vs,trigger,legStyle) # or lep or f</verbatim>
                     leg.Draw()
+                    lastFill_text.DrawLatexNDC(text_x, text_y,text_content)
                     outputFile = outFolderWithTrigger+"/"+prefix+trigger+"_vsIntLumi.root"
                     canv.SaveAs(outputFile)
                     canv.SaveAs(outputFile.replace(".root",".png"))
@@ -545,6 +559,7 @@ for selFolder in selections:
                     leg.AddEntry(xsec_vs,trigger,legStyle) # or lep or f</verbatim>
                     xsec_vsPU.Draw("P") ##keep pileup_vs in backgroup
                     leg.Draw()
+                    lastFill_text.DrawLatexNDC(text_x, text_y,text_content)
                     outputFile = outFolderWithTrigger+"/"+prefix+trigger+"_vsPU.root"
                     canv.SaveAs(outputFile)
                     canv.SaveAs(outputFile.replace(".root",".png"))
