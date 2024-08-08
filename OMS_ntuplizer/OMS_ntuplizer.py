@@ -9,7 +9,7 @@ The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 
 
 #run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
-lastNdays = 7 ## look only at the runs of the last N days
+lastNdays = 700 ## look only at the runs of the last N days
 run_min = 376808 # first cosmics run of cosmics 2024
 #run_min = 3????? # first stable beam 2024 ???
 run_max = 999000
@@ -174,8 +174,21 @@ for d in reversed(data_runs):
         runs.append((run, fromHltKeyToKey(hltkey, run_db)))
 
 
+## find files matching "CRAFT_384185_partialMerged.root"
+import glob
+import re
+partialMergedfiles = glob.glob(outputFolder+"/*partialMerged.root")
+print("partialMergedfiles found %s"%(partialMergedfiles))
+
+
 print("Doing %d runs="%len(runs),runs)
 for (run, key) in runs:
+    partialMergedfilesMatching = [int(re.search(r'_(\d+)_partialMerged.root', f).group(1)) for f in partialMergedfiles if key in f]
+    print(partialMergedfilesMatching)
+    maxRun = max(partialMergedfilesMatching) if len(partialMergedfilesMatching)>0 else -1
+    if run<=maxRun:
+        print("Run=%d already existing covered by %s, skipping."%(run, outputFolder+"/%s_%d_partialMerged.root"%(key,maxRun)))
+        continue
     fName = outputFolder+"/"+key+"_"+str(run)+".root"
     if os.path.isfile(fName):
         print(fName+" already existing, skipping.")
