@@ -15,6 +15,8 @@ run_min = 376808 # first cosmics run of cosmics 2024
 run_max = 999000
 
 
+#run_max = 384000
+#run_min = 379660 ## runs already downloaded until 661
 
 #run_min = 362079 # RunG
 #run_max = 362782 # RunG
@@ -180,18 +182,27 @@ import re
 partialMergedfiles = glob.glob(outputFolder+"/*partialMerged.root")
 print("partialMergedfiles found %s"%(partialMergedfiles))
 
-
+runs.reverse()
 print("Doing %d runs="%len(runs),runs)
 for (run, key) in runs:
+  try:
     partialMergedfilesMatching = [int(re.search(r'_(\d+)_partialMerged.root', f).group(1)) for f in partialMergedfiles if key in f]
     print(partialMergedfilesMatching)
     maxRun = max(partialMergedfilesMatching) if len(partialMergedfilesMatching)>0 else -1
-    if run<=maxRun:
-        print("Run=%d already existing covered by %s, skipping."%(run, outputFolder+"/%s_%d_partialMerged.root"%(key,maxRun)))
-        continue
+    #if key!="physics":
+    #    print("Skipping key %s"%key)
+    #    continue
+
+   # if run<=maxRun:
+   #     print("Run=%d already existing covered by %s, skipping."%(run, outputFolder+"/%s_%d_partialMerged.root"%(key,maxRun)))
+   #     continue
     fName = outputFolder+"/"+key+"_"+str(run)+".root"
     if os.path.isfile(fName):
         print(fName+" already existing, skipping.")
+        continue
+    fName2 = outputFolder+"/partialMerge/"+key+"_"+str(run)+".root"
+    if os.path.isfile(fName2):
+        print(fName2+" already existing, skipping.")
         continue
     print(" Run=%d"%run)
     if run in badRuns:
@@ -604,5 +615,7 @@ for (run, key) in runs:
     print("Closing ",f.GetName())
     f.Write()
     f.Close()
+  except:
+    continue
  
  
