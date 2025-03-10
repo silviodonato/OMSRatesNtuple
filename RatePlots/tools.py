@@ -1,6 +1,7 @@
 import ROOT
 
 def getCrossSection(histo, delLumi, scale=1, removeOutliers=0.98):
+    margin = 0.05
     if removeOutliers>0.5:
         raise Exception("removeOutliers cannot be larger than 0.5. %f"%removeOutliers)
     print("getCrossSection START")
@@ -17,7 +18,7 @@ def getCrossSection(histo, delLumi, scale=1, removeOutliers=0.98):
         y1 = histo.GetArray()
         y2 = delLumi.GetArray()
         ys = [1E-10] ## to keep the same number of bins with rate>0
-        npointsMedian = min(npointsMedian,histo.GetNbinsX())
+        npointsMedian = min(npointsMedian,histo.GetNbinsX()-1)
         jump = max(1., float(histo.GetNbinsX())/ npointsMedian)
         for x in range(1, npointsMedian):
             i = int(x*jump)
@@ -27,12 +28,17 @@ def getCrossSection(histo, delLumi, scale=1, removeOutliers=0.98):
         minAllowedIdx = max(int(len(ys) * (removeOutliers)), 0)
 #        minAllowedIdx = 0 ## do not apply the lower cut
         if len(ys)>1:
-            maxAllowedValue = sorted(ys)[maxAllowedIdx]
-            minAllowedValue = sorted(ys)[minAllowedIdx]
-        else:
-            maxAllowedValue = ys[0]
-            minAllowedValue = ys[0]
+            marginVal = margin * abs(sorted(ys)[maxAllowedIdx])
+            maxAllowedValue = sorted(ys)[maxAllowedIdx] + marginVal
+            minAllowedValue = sorted(ys)[minAllowedIdx] - marginVal
+        else: ##only 1 point
+            val = histo.GetMaximum()/delLumi.GetMaximum()
+            marginVal = abs(val) * margin
+            maxAllowedValue = val + marginVal
+            minAllowedValue = val - marginVal
         # print ( len(ys), minAllowedIdx, maxAllowedIdx, minAllowedValue, maxAllowedValue, [sorted(ys)[i] for i in range(len(ys))])
+        print(ys)
+        print(sorted(ys))
         print("getCrossSection",histo.GetName(),delLumi.GetName(),minAllowedValue, maxAllowedValue, removeOutliers, len(ys), maxAllowedIdx, minAllowedIdx,  histo.Integral(), delLumi.Integral(), jump)
     for i in range(len(histo)-1):
          val = float(histo[i]) 
@@ -170,8 +176,8 @@ def getPlotVsNewVar(plot_vsOldVar, newVar_vsOldVar):
 
 
 def getHistoVsFillNumber(histo, fill):
-    min_ = int(fill.GetMinimum()-1)
-    max_ = int(fill.GetMaximum()+2)
+    min_ = int(fill.GetMinimum()-1.5)
+    max_ = int(fill.GetMaximum()+2.5)
     nHisto = ROOT.TH1F(histo.GetName() + fill.GetName(),"" , max_-min_, min_, max_)
     for i in range(len(histo)):
         if histo.GetBinContent(i)>0 and fill.GetBinContent(i):
@@ -245,7 +251,7 @@ def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, p
     command += "--nbins %s "%nbins
     command += "--selections %s "%selection
     commandNew = command.replace("/DiskIO1OS2/OMSRatesNtuple/","/eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/")
-    out_.write("#original command:"+command+"\n\n")
+    out_.write("#original command:"+command+"\n")
     out_.write(commandNew)
     out_.close()
 
