@@ -1,0 +1,2 @@
+## Compilation command:
+g++ -o makeTemplateForHadd makeTemplateForHadd.cc `root-config --cflags --libs`
