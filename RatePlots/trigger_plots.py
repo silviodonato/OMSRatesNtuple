@@ -61,10 +61,10 @@ import argparse
 parser = argparse.ArgumentParser( 
     description='''https://github.com/silviodonato/OMSRatesNtuple. 
 Example:
-python3 /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2024_physics_merged.root --output plots/   --selections "2024_physics_allHLT"="fill>9517&&recorded_lumi>0.2" 
+python3 /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2025_physics_merged.root --output plots/   --selections "2025_physics_allHLT"="fill>9517&&recorded_lumi>0.2" 
 
 Example cosmics:
-python3 trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2024_physics_merged.root --output plots/   --selections "2024_physics_allHLT"="fill>9517&&recorded_lumi_per_lumisection>0.2"
+python3 trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2025_physics_merged.root --output plots/   --selections "2025_physics_allHLT"="fill>9517&&recorded_lumi_per_lumisection>0.2"
 ''', 
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -121,6 +121,11 @@ print("###################")
 if inputFile:
     chain = ROOT.TChain("tree")
     chain.Add(inputFile)
+    if type(chain)!=ROOT.TChain:
+        raise Exception("Problems with %s."%inputFile)
+    print("Entries %d"%chain.Draw("",""))
+    if chain.Draw("","")==0:
+        raise Exception("0 entries in  %s."%inputFile)
 else:
     try:
         files = os.listdir(inputFolder)
@@ -171,11 +176,11 @@ LS_duration = LS_seconds/ timeUnit #LS in days
 from datetime import datetime
 from datetime import timedelta
 #offset = int(datetime(2023,1,1).timestamp()) - int(datetime(2022,8,31).timestamp())  #since Nov 1, 2022 instead of #since Jan 1, 2023
-#daysSince = datetime(2024,1,31)
+#daysSince = datetime(2025,1,31)
 try: ## python3 - reccomended
-    offset = int(datetime(2024,1,1).timestamp())  #since Feb 29, 2024
-#    offset = int(datetime(2024,1,1).timestamp())  #since Feb 29, 2024
-#    offset = int(datetime(2024,1,1).timestamp()) - int(daysSince.timestamp())  #since Feb 29, 2024
+    offset = int(datetime(2025,1,1).timestamp())  #since Feb 29, 2025
+#    offset = int(datetime(2025,1,1).timestamp())  #since Feb 29, 2025
+#    offset = int(datetime(2025,1,1).timestamp()) - int(daysSince.timestamp())  #since Feb 29, 2025
 except: ## python
     offset = 23850000 ## Mar31, 2023 
     print("Please use 'python3' instead of 'python',")
