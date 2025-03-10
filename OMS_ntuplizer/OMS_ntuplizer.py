@@ -10,8 +10,8 @@ The output ntuples are stored in /eos/user/s/sdonato/public/OMS_rates
 
 #run_min = 355678 ## 355678 ## July 17, before this run the lumi is stored using a different unit
 lastNdays = 700 ## look only at the runs of the last N days
-run_min = 376808 # first cosmics run of cosmics 2024
-#run_min = 3????? # first stable beam 2024 ???
+run_min = 389000 # first  run of cosmics 2025
+#run_min = 3????? # first stable beam 2025 ???
 run_max = 999000
 
 
@@ -24,7 +24,7 @@ run_max = 999000
 #run_max= 367574+10
 minimum_integratedLumi = -1.E-3 # require at least some pb-1 (?) per run 
 minimum_hltevents = -1 # require a minimum of events passing HLT
-outputFolder = "2024"
+outputFolder = "2025"
 
 #missing last json
 #run_min = 362439 
@@ -131,7 +131,7 @@ def fromHltKeyToKey(hltkey, run_db):
         key = "firstCollisions"
     elif "collision" in hltkey:
         key = "collisions"
-    elif "Run2024HI" in hltkey:
+    elif "Run2025HI" in hltkey:
         key = "HIon"
     elif "PRef" in hltkey:
         key = "PRef"
@@ -252,7 +252,7 @@ for (run, key) in runs:
         lumisections['hour'].append(int(HH))
         lumisections['minute'].append(int(MM))
         lumisections['second'].append(int(SS))
-        lumisections['time'].append(int(datetime(int(yy), int(mm), int(dd), int(HH), int(MM),int(SS)).timestamp()) - int(datetime(2024,1,1).timestamp()))
+        lumisections['time'].append(int(datetime(int(yy), int(mm), int(dd), int(HH), int(MM),int(SS)).timestamp()) - int(datetime(2025,1,1).timestamp()))
         lumisections['deadtime'] = [ r/d if d>0 else 1 for r, d in zip(lumisections['recorded_lumi_per_lumisection'], lumisections['delivered_lumi_per_lumisection'])]
         run_recLumi = sum(lumisections["recorded_lumi_per_lumisection"])
         cms_ready = True
