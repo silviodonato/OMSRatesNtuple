@@ -245,7 +245,7 @@ def saveSh(outputFile, filePath, useRate, vs, trigger, inputFolder, inputFile, p
     command += "--nbins %s "%nbins
     command += "--selections %s "%selection
     commandNew = command.replace("/DiskIO1OS2/OMSRatesNtuple/","/eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/")
-    out_.write("#original command:"+command+"\n")
+    out_.write("#original command:"+command+"\n\n")
     out_.write(commandNew)
     out_.close()
 
