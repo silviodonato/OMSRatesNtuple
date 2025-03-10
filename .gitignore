@@ -1,0 +1,8 @@
+OMS_ntuplizer/2025/
+OMS_ntuplizer/*root
+OMS_ntuplizer/*d
+OMS_ntuplizer/*pcm
+OMS_ntuplizer/*so
+RatePlots/plots
+RatePlots/__pycache__
+OMS_ntuplizer/__pycache__
