@@ -219,6 +219,8 @@ for entry in [0, chain.GetEntries()-1]: #check only the first and last event
     chain.GetEvent(entry)
     for trigger in triggers[:]:
         trigger_matched = fnmatch.filter(branches, trigger) ## expands trigger matching (eg. HLT_IsoMu*)
+        ## Remove splitted dataset or streams (eg. keep only Dataset_EphemeralHLTPhysics0, not Dataset_EphemeralHLTPhysics4)
+        trigger_matched = [t for t in trigger_matched if not (t[-1].isdigit() and t[-1]!="0") and (not t[-2].isdigit()) and (not t[-3].isdigit()) ] ## remove triggers ending with a digit, except for the last one
         triggers_expanded += [ t for t in trigger_matched if not t in triggers_expanded] ## avoid duplicates
         if len(trigger_matched)==0:
             print("##### Trigger %s not found in run %d. Removed from the trigger list. #####"%(trigger,chain.run))
@@ -227,6 +229,11 @@ for entry in [0, chain.GetEntries()-1]: #check only the first and last event
         if trigger == "allL1": 
             triggers += [a.GetName() for a in chain.GetListOfLeaves() if a.GetName()[:3]=="L1_"]
 triggers = triggers_expanded
+
+print("Trigger list expanded:", triggers)
+if len(triggers)==0:
+    raise Exception("No triggers found in the input file. Please check your --triggers option.")
+
 
 
 ## Time varibale
