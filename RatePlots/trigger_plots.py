@@ -220,13 +220,12 @@ for entry in [0, chain.GetEntries()-1]: #check only the first and last event
     for trigger in triggers[:]:
         trigger_matched = fnmatch.filter(branches, trigger) ## expands trigger matching (eg. HLT_IsoMu*)
         ## Remove splitted dataset or streams (eg. keep only Dataset_EphemeralHLTPhysics0, not Dataset_EphemeralHLTPhysics4)
-        print("Trigger %s matched: %s"%(trigger, trigger_matched))
         trigger_matched = [  ## remove triggers ending with a digit, except for the last one
             t for t in trigger_matched
-            if (not t[-1].isdigit())                        # no trailing digit at all
-            or (t[-1] == "0" and (len(t) < 2 or not t[-2].isdigit()))  # single '0'
+            if (not(t.startswith("Dataset") or t.startswith("Stream")) # include all triggers not starting with Dataset or Stream (L1_SingleJet200, HLT_IsoMu24_v, etc.)
+             or not t[-1].isdigit())                        # include all triggers not ending with a digit (Stream_ScoutingPFMonitoring)
+             or (t[-1] == "0" and (len(t) < 2 or not t[-2].isdigit()))  # include Dataset_EphemeralHLTPhysics0, but not Dataset_EphemeralHLTPhysics4 nor Dataset_EphemeralHLTPhysics40
         ]
-        print("Trigger %s matched: %s"%(trigger, trigger_matched))
         triggers_expanded += [ t for t in trigger_matched if not t in triggers_expanded] ## avoid duplicates
         if len(trigger_matched)==0:
             print("##### Trigger %s not found in run %d. Removed from the trigger list. #####"%(trigger,chain.run))
