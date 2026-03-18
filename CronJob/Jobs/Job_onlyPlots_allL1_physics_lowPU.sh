@@ -1,7 +1,7 @@
 #oms_ntuplizer_dir="/eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer/"
 oms_ntuplizer_dir="/DiskIO1OS2/OMSRatesNtuple/OMS_ntuplizer/"
 echo 
-echo "Processing OMS plots allL1_physics"
+echo "Processing OMS plots allL1_physics_lowPU"
 echo $(date)
 
 rate_plot_dir="${oms_ntuplizer_dir}/../RatePlots/"
@@ -12,7 +12,7 @@ last_file=$(find $rate_plot_dir"plots/2026_physics_allL1" -maxdepth 1 -type f -p
 
 if [ ${oms_ntuplizer_dir}/"2026_physics_merged.root" -nt "$last_file" ]
 then
-    command="cd ${rate_plot_dir} && python3 trigger_plots.py --xsect --rates  --vsRun --vsFill --vsTime  --vsIntLumi  --vsPU  --lumisPerBin 30 --inputFile \"${oms_ntuplizer_dir}/2026_physics_merged.root\" --triggers allL1  --selections \"2026_physics_allL1=recorded_lumi_per_lumisection>-0.2\""
+    command="cd ${rate_plot_dir} && python3 trigger_plots.py --xsect --rates  --vsRun --vsFill --vsTime  --vsIntLumi  --vsPU  --lumisPerBin 30 --inputFile \"${oms_ntuplizer_dir}/2026_physics_merged.root\" --triggers allL1  --selections \"2026_physics_allL1_lowPU=recorded_lumi_per_lumisection>-0.2&&pileup>0.5&&pileup<10\""
     echo $command
     eval $command
 else

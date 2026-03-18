@@ -61,10 +61,10 @@ import argparse
 parser = argparse.ArgumentParser( 
     description='''https://github.com/silviodonato/OMSRatesNtuple. 
 Example:
-python3 /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2025_physics_merged.root --output plots/   --selections "2025_physics_allHLT"="fill>9517&&recorded_lumi>0.2" 
+python3 /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/RatePlots/trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2026_physics_merged.root --output plots/   --selections "2026_physics_allHLT"="fill>9517&&recorded_lumi>0.2" 
 
 Example cosmics:
-python3 trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2025_physics_merged.root --output plots/   --selections "2025_physics_allHLT"="fill>9517&&recorded_lumi_per_lumisection>0.2"
+python3 trigger_plots.py --xsect --vsIntLumi --triggers HLT_IsoMu24_v --inputFile /eos/home-s/sdonato/www/OMSRatesNtuple/OMSRatesNtuple/OMS_ntuplizer//2026_physics_merged.root --output plots/   --selections "2026_physics_allHLT"="fill>9517&&recorded_lumi_per_lumisection>0.2"
 ''', 
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -178,7 +178,7 @@ from datetime import timedelta
 #offset = int(datetime(2023,1,1).timestamp()) - int(datetime(2022,8,31).timestamp())  #since Nov 1, 2022 instead of #since Jan 1, 2023
 #daysSince = datetime(2025,1,31)
 try: ## python3 - reccomended
-    offset = int(datetime(2025,1,1).timestamp())  #since Feb 29, 2025
+    offset = int(datetime(2026,1,1).timestamp())  #since Jan 1, 2026
 #    offset = int(datetime(2025,1,1).timestamp())  #since Feb 29, 2025
 #    offset = int(datetime(2025,1,1).timestamp()) - int(daysSince.timestamp())  #since Feb 29, 2025
 except: ## python
