@@ -16,7 +16,7 @@ fillLabel = "Fill number"
 
 minY=-1
 maxY=-1
-fillNumberMargin = 5
+fillNumberMargin = 1
 
 
 ### Text for "updated" label

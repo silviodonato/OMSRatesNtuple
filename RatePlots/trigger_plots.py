@@ -201,11 +201,12 @@ ROOT.gStyle.SetOptFit(0)
 #firstFill = chain.fill
 #firstRun = chain.run
 
-chain.Draw("fill >> tmpFill(20000,0,20000)","","GOFF")
+print("runMin = %d, runMax = %d"%(runMin, runMax))
+chain.Draw("fill >> tmpFill",f"run>({runMin}-1) && run<({runMax}+1)","GOFF")
 tmpFill = ROOT.gROOT.Get("tmpFill")
 firstFill, lastFill_ = tmpFill.GetXaxis().GetBinCenter(tmpFill.FindFirstBinAbove(0)), tmpFill.GetXaxis().GetBinCenter(tmpFill.FindLastBinAbove(0))
 
-chain.Draw("run >> tmpRun(500000,0,500000)","","GOFF")
+chain.Draw("run >> tmpRun",f"run>({runMin}-1) && run<({runMax}+1)","GOFF")
 tmpRun = ROOT.gROOT.Get("tmpRun")
 firstRun, lastRun = tmpRun.GetXaxis().GetBinCenter(tmpRun.FindFirstBinAbove(0)), tmpRun.GetXaxis().GetBinCenter(tmpRun.FindLastBinAbove(0))
 

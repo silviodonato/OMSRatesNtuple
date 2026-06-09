@@ -92,8 +92,21 @@ def getHisto(weight, chain, var, binning, selection, deadtimeCorrection, option=
 
 def getBinning(chain, var, selection,bin_size):
     tmp =  getHisto("1", chain, var, "", selection, False)
-    timemax = tmp.GetXaxis().GetXmax()
-    timemin = tmp.GetXaxis().GetXmin()
+    # timemax = tmp.GetXaxis().GetXmax()
+    # timemin = tmp.GetXaxis().GetXmin()
+    ## take the last unempty bin as max time (to avoid to take the same max time in case of multiple empty bins at the end)
+    # FindLastBinAbove
+    timemax = tmp.GetBinLowEdge(tmp.FindLastBinAbove(0)+1)
+    timemin = tmp.GetBinLowEdge(tmp.FindFirstBinAbove(0))   
+    # for i in range(len(tmp)-5, 0, -1):
+    #     if tmp.GetBinContent(i)>0:
+    #         timemax = tmp.GetBinLowEdge(i+1)
+    #         break
+    # ## take the first non empty bin as min time (to avoid to take the same min time in case of multiple empty bins at the beginning)
+    # for i in range(1, len(tmp)):
+    #     if tmp.GetBinContent(i)>0:
+    #          timemin = tmp.GetBinLowEdge(i)
+    #          break
     ntimebins =  int((timemax-timemin)/bin_size)
     timemax = timemin + bin_size*(ntimebins-1)
     del tmp
@@ -184,6 +197,8 @@ def getHistoVsFillNumber(histo, fill):
             nHisto.Fill(fill.GetBinContent(i), histo.GetBinContent(i))
 #            print(fill.GetBinContent(i), histo.GetBinContent(i))
     nHisto.Sumw2()
+    nHisto.SetMaximum(histo.GetMaximum() + (histo.GetMaximum()-histo.GetMinimum())*0.05)
+    nHisto.SetMinimum(histo.GetMinimum() - (histo.GetMaximum()-histo.GetMinimum())*0.05)
     return nHisto
 
 def readOptions(args, triggers, selections):

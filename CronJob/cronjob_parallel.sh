@@ -39,18 +39,18 @@ echo "Environment size: $(env | wc -c) bytes"
 run_cron_job Jobs/Job_onlyNtuplizer.sh 60 &
 #run_cron_job Jobs/Job_onlyUpdateJIRA.sh 60 &
 #run_cron_job Jobs/Job_onlyPlots.sh 10 &
-#run_cron_job Jobs/Job_onlyPlots_allHLT_CRUZET.sh 3600 &
-#run_cron_job Jobs/Job_onlyPlots_allL1_CRUZET.sh 3600 &
-run_cron_job Jobs/Job_onlyPlots_allHLT_CRAFT.sh 3600 &
-run_cron_job Jobs/Job_onlyPlots_allL1_CRAFT.sh 3600 &
+run_cron_job Jobs/Job_onlyPlots_allHLT_CRUZET.sh 86400 &
+run_cron_job Jobs/Job_onlyPlots_allL1_CRUZET.sh 86400  &
+run_cron_job Jobs/Job_onlyPlots_allHLT_CRAFT.sh 86400 &
+run_cron_job Jobs/Job_onlyPlots_allL1_CRAFT.sh 86400 &
 run_cron_job Jobs/Job_onlyPlots_allHLT_physics.sh 3600 &
 run_cron_job Jobs/Job_onlyPlots_allL1_physics.sh 3600 &
-#run_cron_job Jobs/Job_onlyPlots_allHLT_special.sh 3600 &
-#run_cron_job Jobs/Job_onlyPlots_allL1_special.sh 3600 &
+run_cron_job Jobs/Job_onlyPlots_allHLT_special.sh 86400 &
+run_cron_job Jobs/Job_onlyPlots_allL1_special.sh 86400 &
 run_cron_job Jobs/Job_onlyPlots_allHLT_physics_highPU.sh 3600 &
 run_cron_job Jobs/Job_onlyPlots_allL1_physics_highPU.sh 3600 &
-run_cron_job Jobs/Job_onlyPlots_allHLT_physics_lowPU.sh 3600 &
-run_cron_job Jobs/Job_onlyPlots_allL1_physics_lowPU.sh 3600 &
+#run_cron_job Jobs/Job_onlyPlots_allHLT_physics_lowPU.sh 3600 &
+#run_cron_job Jobs/Job_onlyPlots_allL1_physics_lowPU.sh 3600 &
 
 #run_cron_job Jobs/Job_onlyPlots_allHLT_HIon.sh 3600 &
 #run_cron_job Jobs/Job_onlyPlots_allL1_HIon.sh 3600 &

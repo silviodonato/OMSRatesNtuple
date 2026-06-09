@@ -12,7 +12,7 @@ last_file=$(find $rate_plot_dir"plots/2026_physics_allL1" -maxdepth 1 -type f -p
 
 if [ ${oms_ntuplizer_dir}/"2026_physics_merged.root" -nt "$last_file" ]
 then
-    command="cd ${rate_plot_dir} && python3 trigger_plots.py --xsect --rates  --vsRun --vsFill --vsTime  --vsIntLumi  --vsPU  --lumisPerBin 30 --inputFile \"${oms_ntuplizer_dir}/2026_physics_merged.root\" --triggers allL1  --selections \"2026_physics_allL1=recorded_lumi_per_lumisection>-0.2\""
+    command="cd ${rate_plot_dir} && python3 trigger_plots.py --xsect --rates  --vsRun --vsFill --vsTime  --vsIntLumi  --vsPU  --lumisPerBin 30 --inputFile \"${oms_ntuplizer_dir}/2026_physics_merged.root\" --triggers allL1  --selections \"2026_physics_allL1=recorded_lumi_per_lumisection>0.2\""
     echo $command
     eval $command
 else
